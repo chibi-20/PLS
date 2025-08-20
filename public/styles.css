@@ -1,0 +1,127 @@
+/* ===== Reset and Base Styles ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #ffffff, #f4f7fb);
+  color: #333;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+/* ===== Container Card ===== */
+.container {
+  max-width: 450px;
+  width: 100%;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.container:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.container h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #004c99;
+  font-weight: 700;
+}
+
+/* ===== Form Styles ===== */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-top: 14px;
+  font-weight: 600;
+  color: #444;
+}
+
+input,
+select,
+textarea {
+  padding: 12px;
+  margin-top: 6px;
+  font-size: 1em;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #fff;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
+  outline: none;
+}
+
+/* ===== Button Styles ===== */
+button {
+  margin-top: 25px;
+  padding: 12px;
+  font-size: 1em;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+}
+
+/* ===== Paragraph & Links ===== */
+p {
+  text-align: center;
+  margin-top: 20px;
+  color: #555;
+  font-size: 0.95em;
+}
+
+p a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+p a:hover {
+  text-decoration: underline;
+}
+
+/* ===== Mobile Responsive ===== */
+@media (max-width: 500px) {
+  .container {
+    padding: 20px;
+    border-radius: 12px;
+  }
+  
+  .container h1 {
+    font-size: 1.5em;
+  }
+
+  input,
+  select,
+  button {
+    font-size: 0.95em;
+  }
+}

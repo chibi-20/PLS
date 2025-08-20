@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Registration</title>
+ <link rel="stylesheet" href="/proficiency/public/styles.css">
+  <style>
+    .section-inputs {
+      display: flex;
+      gap: 5px;
+      margin-top: 5px;
+    }
+    .section-inputs input {
+      flex: 1;
+    }
+    .remove-section {
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+
+  <div class="container">
+    <h1>Create Account</h1>
+    <div id="message" style="display:none; padding:10px; margin:10px 0; border-radius:4px;"></div>
+    <form id="register-form">
+      
+      <label for="fullname">Full Name</label>
+      <input type="text" id="fullname" name="fullname" required>
+
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required>
+
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required>
+
+      <label for="subject">Subject Taught</label>
+        <select id="subject" name="subject" required>
+          <option value="">-- Select Subject --</option>
+          <option value="Filipino">Filipino</option>
+          <option value="English">English</option>
+          <option value="Math">Math</option>
+          <option value="Science">Science</option>
+          <option value="Araling Panlipunan">Araling Panlipunan</option>
+          <option value="Edukasyon sa Pagpapakatao">Edukasyon sa Pagpapakatao</option>
+          <option value="Technology and Livelihood Education">Technology and Livelihood Education</option>
+          <option value="MAPEH">MAPEH</option>
+        </select>
+
+      <label for="gradeLevel">Grade Level</label>
+        <select id="gradeLevel" name="gradeLevel" required>
+          <option value="">-- Select Grade Level --</option>
+          <option value="Grade 7">Grade 7</option>
+          <option value="Grade 8">Grade 8</option>
+          <option value="Grade 9">Grade 9</option>
+          <option value="Grade 10">Grade 10</option>
+        </select>
+
+      <label>Sections</label>
+      <div id="sections-container">
+        <div class="section-inputs">
+          <input type="text" name="sections[]" placeholder="Enter section name" required>
+        </div>
+      </div>
+      <button type="button" id="add-section-btn">+ Add Section</button>
+
+      <button type="submit" style="margin-top:20px;">Register</button>
+    </form>
+
+    <p>Already have an account? <a href="login.html">Login</a></p>
+  </div>
+
+  <script>
+    const addSectionBtn = document.getElementById('add-section-btn');
+    const sectionsContainer = document.getElementById('sections-container');
+    const registerForm = document.getElementById('register-form');
+    const messageDiv = document.getElementById('message');
+
+    // Add section functionality
+    addSectionBtn.addEventListener('click', () => {
+      const sectionDiv = document.createElement('div');
+      sectionDiv.classList.add('section-inputs');
+
+      sectionDiv.innerHTML = `
+        <input type="text" name="sections[]" placeholder="Enter section name" required>
+        <button type="button" class="remove-section">X</button>
+      `;
+
+      sectionDiv.querySelector('.remove-section').addEventListener('click', () => {
+        sectionDiv.remove();
+      });
+
+      sectionsContainer.appendChild(sectionDiv);
+    });
+
+    // Handle form submission
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(registerForm);
+      
+      try {
+        const response = await fetch('../backend/register.php', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          messageDiv.style.display = 'block';
+          messageDiv.style.backgroundColor = '#d4edda';
+          messageDiv.style.color = '#155724';
+          messageDiv.style.border = '1px solid #c3e6cb';
+          messageDiv.textContent = result.message;
+          
+          // Redirect to login page after successful registration
+          setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 2000);
+        } else {
+          messageDiv.style.display = 'block';
+          messageDiv.style.backgroundColor = '#f8d7da';
+          messageDiv.style.color = '#721c24';
+          messageDiv.style.border = '1px solid #f5c6cb';
+          messageDiv.textContent = result.message;
+        }
+      } catch (error) {
+        messageDiv.style.display = 'block';
+        messageDiv.style.backgroundColor = '#f8d7da';
+        messageDiv.style.color = '#721c24';
+        messageDiv.style.border = '1px solid #f5c6cb';
+        messageDiv.textContent = 'An error occurred during registration. Please try again.';
+        console.error('Registration error:', error);
+      }
+    });
+  </script>
+
+</body>
+</html>

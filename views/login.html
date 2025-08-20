@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
+  <link rel="stylesheet" href="/proficiency/public/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Login</h1>
+    <form id="login-form" aria-label="Login Form">
+      <label for="username">Username:</label>
+      <input type="text" id="username" name="username" placeholder="Enter your username" required />
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" placeholder="Enter your password" required />
+
+      <button type="submit">Login</button>
+    </form>
+    <p>Don't have an account? <a href="register.html">Register here</a></p>
+  </div>
+
+  <script>
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const res = await fetch('../backend/login.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const contentType = res.headers.get("content-type");
+
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Expected JSON response but got: " + contentType);
+        }
+
+        const result = await res.json();
+
+        if (res.ok && result.success) {
+          alert("Login successful!");
+          
+          // Store user info in session storage
+          sessionStorage.setItem('userInfo', JSON.stringify(result.user));
+          
+          // Redirect based on user role
+          if (result.user.role === 'admin') {
+            window.location.href = './admin-dashboard.html';
+          } else if (result.user.role === 'teacher') {
+            window.location.href = './teacher-dashboard.html';
+          } else {
+            // Default fallback
+            window.location.href = './teacher-dashboard.html';
+          }
+        } else {
+          alert(result.message || 'Login failed');
+        }
+
+      } catch (err) {
+        alert('Login error: ' + err.message);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teacher Dashboard - Proficiency Tracker</title>
+  <link rel="stylesheet" href="/proficiency/public/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Dashboard-specific styles that extend the main theme */
+    body {
+      background: linear-gradient(135deg, #f8fafc, #e3f2fd);
+      padding: 0;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .dashboard-container {
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #004c99, #007bff);
+      color: white;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-weight: 700;
+      font-size: 1.8em;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logout-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: all 0.3s ease;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    /* Main Content Layout */
+    .main-content {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      min-height: calc(100vh - 120px);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: #f8fafc;
+      padding: 25px;
+      border-right: 1px solid #e2e8f0;
+    }
+
+    .sidebar h2 {
+      color: #004c99;
+      margin-bottom: 20px;
+      font-size: 1.3em;
+      font-weight: 600;
+    }
+
+    .sidebar label {
+      color: #4a5568;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .sidebar select {
+      width: 100%;
+      margin-bottom: 20px;
+      border: 1px solid #cbd5e0;
+      background: white;
+    }
+
+    .chart-container {
+      margin: 20px 0;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .chart-container h3 {
+      font-size: 0.85em;
+      margin-bottom: 10px;
+      color: #4a5568;
+      text-align: center;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 200px !important;
+    }
+
+    /* Content Area */
+    .content {
+      padding: 25px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 25px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .tab-button {
+      background: #f7fafc;
+      color: #4a5568;
+      border: none;
+      padding: 12px 24px;
+      cursor: pointer;
+      border-radius: 8px 8px 0 0;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      margin: 0;
+      font-size: 0.95em;
+    }
+
+    .tab-button.active {
+      background: #007bff;
+      color: white;
+      transform: translateY(0);
+    }
+
+    .tab-button:hover:not(.active) {
+      background: #edf2f7;
+      color: #2d3748;
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tab-content h2 {
+      color: #004c99;
+      margin-bottom: 20px;
+      font-size: 1.4em;
+      font-weight: 600;
+    }
+
+    /* Forms */
+    .tab-content form {
+      background: #f8fafc;
+      padding: 25px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .tab-content input,
+    .tab-content select,
+    .tab-content textarea {
+      margin-bottom: 15px;
+    }
+
+    .tab-content textarea {
+      min-height: 120px;
+      resize: vertical;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .tab-content button[type="submit"] {
+      background: #007bff;
+      margin-top: 15px;
+      width: auto;
+      padding: 12px 24px;
+    }
+
+    .tab-content button[type="submit"]:hover {
+      background: #0056b3;
+    }
+
+    /* Section List */
+    #sectionList {
+      margin-top: 20px;
+    }
+
+    .section-item {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .section-name {
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    .delete-section {
+      background: #e53e3e;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85em;
+      margin: 0;
+    }
+
+    .delete-section:hover {
+      background: #c53030;
+    }
+
+    /* Proficiency Data Tab Styles */
+    .proficiency-filters {
+      background: #f8fafc;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 25px;
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 15px;
+      align-items: end;
+    }
+
+    .proficiency-filters label {
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #4a5568;
+    }
+
+    .proficiency-filters select {
+      margin: 0;
+    }
+
+    #refreshProficiencyData {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      margin: 0;
+    }
+
+    #refreshProficiencyData:hover {
+      background: #218838;
+      transform: translateY(-1px);
+    }
+
+    .proficiency-section-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .proficiency-section-header {
+      background: linear-gradient(135deg, #004c99, #007bff);
+      color: white;
+      padding: 15px 20px;
+      font-weight: 600;
+      font-size: 1.1em;
+    }
+
+    .proficiency-quarter-data {
+      padding: 20px;
+    }
+
+    .quarter-header {
+      color: #004c99;
+      font-weight: 600;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .proficiency-levels {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .proficiency-level {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .proficiency-level:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .proficiency-level.excellent {
+      border-left: 4px solid #28a745;
+    }
+
+    .proficiency-level.very-good {
+      border-left: 4px solid #20c997;
+    }
+
+    .proficiency-level.good {
+      border-left: 4px solid #ffc107;
+    }
+
+    .proficiency-level.satisfactory {
+      border-left: 4px solid #fd7e14;
+    }
+
+    .proficiency-level.fair {
+      border-left: 4px solid #dc3545;
+    }
+
+    .proficiency-level.needs-improvement {
+      border-left: 4px solid #6f42c1;
+    }
+
+    .proficiency-level.poor {
+      border-left: 4px solid #343a40;
+    }
+
+    .level-title {
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 8px;
+      font-size: 0.9em;
+    }
+
+    .level-range {
+      color: #4a5568;
+      font-size: 0.85em;
+      margin-bottom: 10px;
+    }
+
+    .level-count {
+      font-size: 1.5em;
+      font-weight: 700;
+      color: #004c99;
+    }
+
+    .gender-breakdown {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 10px;
+      font-size: 0.85em;
+    }
+
+    .gender-count {
+      color: #666;
+    }
+
+    .gender-count .boys {
+      color: #007bff;
+    }
+
+    .gender-count .girls {
+      color: #e83e8c;
+    }
+
+    .no-data-message {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+      padding: 40px 20px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Overall Proficiency Styles */
+    .overall-proficiency-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .overall-proficiency-header {
+      padding: 20px 25px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .overall-proficiency-title {
+      font-size: 1.4em;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .overall-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px;
+      padding: 15px 25px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .overall-stat {
+      text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-label {
+      font-size: 0.85em;
+      opacity: 0.9;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 1.8em;
+      font-weight: 700;
+    }
+
+    .overall-proficiency-levels {
+      padding: 25px;
+      background: white;
+      color: #333;
+    }
+
+    .overall-levels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    .overall-level {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .overall-level::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: #e2e8f0;
+    }
+
+    .overall-level.excellent::before { background: #28a745; }
+    .overall-level.very-good::before { background: #20c997; }
+    .overall-level.good::before { background: #ffc107; }
+    .overall-level.satisfactory::before { background: #fd7e14; }
+    .overall-level.fair::before { background: #dc3545; }
+    .overall-level.needs-improvement::before { background: #6f42c1; }
+    .overall-level.poor::before { background: #343a40; }
+
+    .overall-level:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .overall-level-title {
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 8px;
+      font-size: 0.95em;
+    }
+
+    .overall-level-range {
+      color: #4a5568;
+      font-size: 0.8em;
+      margin-bottom: 15px;
+    }
+
+    .overall-level-count {
+      font-size: 2.2em;
+      font-weight: 700;
+      color: #004c99;
+      margin-bottom: 10px;
+    }
+
+    .overall-percentage {
+      font-size: 0.9em;
+      color: #666;
+      font-weight: 600;
+    }
+
+    .overall-gender-breakdown {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 12px;
+      font-size: 0.85em;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 10px;
+    }
+
+    .section-divider {
+      margin: 30px 0;
+      padding: 15px 0;
+      border-top: 2px solid #e2e8f0;
+      position: relative;
+    }
+
+    .section-divider::before {
+      content: 'Individual Section Data';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 0 20px;
+      color: #4a5568;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+      
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      
+      .dashboard-container {
+        margin: 10px;
+        border-radius: 12px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .sidebar, .content {
+        padding: 20px;
+      }
+      
+      .tabs {
+        flex-direction: column;
+      }
+      
+      .tab-button {
+        border-radius: 8px;
+        margin-bottom: 2px;
+      }
+
+      .proficiency-filters {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+
+      .proficiency-levels {
+        grid-template-columns: 1fr;
+      }
+
+      .overall-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .overall-levels-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .overall-proficiency-title {
+        font-size: 1.1em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <header>
+      <h1>Teacher Dashboard</h1>
+      <div class="user-info">
+        <div style="text-align: right;">
+          <span id="welcome">Welcome, Teacher!</span>
+          <div id="teacherInfo" style="font-size: 0.85em; opacity: 0.9; margin-top: 2px;">
+            <span id="subjectGrade"></span>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <!-- Sidebar Graph -->
+      <aside class="sidebar">
+        <h2>📊 Proficiency Summary</h2>
+        
+        <label for="chartSectionSelect">Select Section:</label>
+        <select id="chartSectionSelect">
+          <option value="">Overall (All Sections)</option>
+        </select>
+        
+        <label for="quarterSelect">Select Quarter:</label>
+        <select id="quarterSelect">
+          <option value="1">Quarter 1</option>
+          <option value="2">Quarter 2</option>
+          <option value="3">Quarter 3</option>
+          <option value="4">Quarter 4</option>
+        </select>
+        
+        <div class="chart-container">
+          <h3 style="margin-bottom: 10px; color: #4a5568; font-size: 0.9em;">Combined Performance</h3>
+          <canvas id="combinedChart"></canvas>
+        </div>
+        
+        <div class="chart-container">
+          <h3 style="margin-bottom: 10px; color: #4a5568; font-size: 0.9em;">Boys Performance</h3>
+          <canvas id="boysChart"></canvas>
+        </div>
+        
+        <div class="chart-container">
+          <h3 style="margin-bottom: 10px; color: #4a5568; font-size: 0.9em;">Girls Performance</h3>
+          <canvas id="girlsChart"></canvas>
+        </div>
+      </aside>
+
+      <!-- Main Panel with Tabs -->
+      <section class="content">
+        <div class="tabs">
+          <button class="tab-button active" data-tab="addSectionTab">📁 Manage Sections</button>
+          <button class="tab-button" data-tab="inputProficiencyTab">📝 Input Grades</button>
+          <button class="tab-button" data-tab="proficiencyDataTab">📊 Proficiency Data</button>
+        </div>
+
+        <div class="tab-content active" id="addSectionTab">
+          <h2>Manage Sections</h2>
+          <form id="addSectionForm">
+            <label for="sectionName">Section Name:</label>
+            <input type="text" id="sectionName" placeholder="Enter section name (e.g., Grade 7-A)" required />
+            <button type="submit">Add Section</button>
+          </form>
+          
+          <div id="sectionList">
+            <!-- Sections will be loaded here -->
+          </div>
+        </div>
+
+        <div class="tab-content" id="inputProficiencyTab">
+          <h2>Input Student Grades</h2>
+          <form id="proficiencyForm">
+            <label for="sectionSelect">Select Section:</label>
+            <select id="sectionSelect">
+              <option value="">-- Choose a section --</option>
+            </select>
+
+            <label for="quarterInput">Quarter:</label>
+            <select id="quarterInput">
+              <option value="1">Quarter 1</option>
+              <option value="2">Quarter 2</option>
+              <option value="3">Quarter 3</option>
+              <option value="4">Quarter 4</option>
+            </select>
+
+            <label for="gradesBoys">Boys' Grades (One grade per line):</label>
+            <textarea id="gradesBoys" rows="6" placeholder="Enter numerical grades, one per line:&#10;87&#10;91&#10;75&#10;82&#10;94"></textarea>
+
+            <label for="gradesGirls">Girls' Grades (One grade per line):</label>
+            <textarea id="gradesGirls" rows="6" placeholder="Enter numerical grades, one per line:&#10;85&#10;93&#10;78&#10;89&#10;96"></textarea>
+
+            <button type="submit">Save Grades</button>
+          </form>
+        </div>
+
+        <div class="tab-content" id="proficiencyDataTab">
+          <h2>Proficiency Data Overview</h2>
+          
+          <div class="proficiency-filters">
+            <label for="proficiencySection">Filter by Section:</label>
+            <select id="proficiencySection">
+              <option value="">All Sections</option>
+            </select>
+            
+            <label for="proficiencyQuarter">Filter by Quarter:</label>
+            <select id="proficiencyQuarter">
+              <option value="">All Quarters</option>
+              <option value="1">Quarter 1</option>
+              <option value="2">Quarter 2</option>
+              <option value="3">Quarter 3</option>
+              <option value="4">Quarter 4</option>
+            </select>
+            
+            <button type="button" id="refreshProficiencyData">🔄 Refresh Data</button>
+          </div>
+
+          <!-- Overall Proficiency Summary -->
+          <div id="overallProficiencyContainer">
+            <!-- Overall proficiency data will be displayed here -->
+          </div>
+
+          <div id="proficiencyDataContainer">
+            <!-- Individual section proficiency data will be displayed here -->
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+<script>
+// Get user info from session/local storage or URL params
+function loadUserInfo() {
+  // Try to get user info from session storage or make an API call
+  const userInfo = sessionStorage.getItem('userInfo');
+  if (userInfo) {
+    const user = JSON.parse(userInfo);
+    document.getElementById('welcome').textContent = `Welcome, ${user.fullname || user.username}!`;
+    
+    // Display subject and grade level
+    const subjectGradeElement = document.getElementById('subjectGrade');
+    if (user.subject_taught && user.grade_level) {
+      subjectGradeElement.textContent = `${user.subject_taught} - ${user.grade_level}`;
+    } else if (user.subject_taught) {
+      subjectGradeElement.textContent = user.subject_taught;
+    }
+  } else {
+    // Fallback - check URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('user');
+    
+    if (userId) {
+      fetch(`../backend/get_user_info.php?id=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById('welcome').textContent = `Welcome, ${data.user.fullname || data.user.username}!`;
+            
+            const subjectGradeElement = document.getElementById('subjectGrade');
+            if (data.user.subject_taught && data.user.grade_level) {
+              subjectGradeElement.textContent = `${data.user.subject_taught} - ${data.user.grade_level}`;
+            }
+            
+            sessionStorage.setItem('userInfo', JSON.stringify(data.user));
+          }
+        })
+        .catch(err => {
+          console.log('Could not load user info:', err);
+          document.getElementById('welcome').textContent = 'Welcome, Teacher!';
+        });
+    }
+  }
+}
+
+// Logout function
+function logout() {
+  if (confirm('Are you sure you want to logout?')) {
+    // Clear session storage
+    sessionStorage.clear();
+    
+    // Make logout API call
+    fetch('../backend/logout.php', {
+      method: 'POST'
+    })
+    .then(() => {
+      window.location.href = 'login.html';
+    })
+    .catch(() => {
+      // Even if logout fails, redirect to login
+      window.location.href = 'login.html';
+    });
+  }
+}
+
+// Tab functionality
+function initializeTabs() {
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      // Remove active class from all buttons and contents
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      tabContents.forEach(content => content.classList.remove('active'));
+
+      // Add active class to clicked button
+      button.classList.add('active');
+
+      // Show corresponding tab content
+      const tabId = button.getAttribute('data-tab');
+      document.getElementById(tabId).classList.add('active');
+    });
+  });
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  loadUserInfo();
+  initializeTabs();
+});
+</script>
+
+  <script src="/proficiency/public/script-teacher-dashboard.js"></script>
+  
+</body>
+</html>
