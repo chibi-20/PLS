@@ -23,7 +23,7 @@ if ($isAjax) {
     echo json_encode(["success" => true, "message" => "Logged out successfully"]);
 } else {
     // Redirect to login page for direct browser access
-    header('Location: ../views/login.html');
+    header('Location: ../login.html');
     exit;
 }
 ?>
