@@ -1,25 +1,6 @@
 <?php
 header('Content-Type: application/json');
-
-// Database connection
-$host = 'localhost';
-$db   = 'proficiency_tracker';
-$user = 'root';
-$pass = ''; // default for XAMPP is no password
-$charset = 'utf8mb4';
-
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-
-try {
-    $pdo = new PDO($dsn, $user, $pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    echo json_encode([
-        "success" => false,
-        "message" => "Database connection failed: " . $e->getMessage()
-    ]);
-    exit;
-}
+require_once 'db.php'; // This gives us $conn from MySQLi
 
 // Read and decode JSON request
 $data = json_decode(file_get_contents("php://input"), true);
@@ -36,9 +17,11 @@ if (empty($username) || empty($password)) {
 
 // Check user in database
 try {
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
-    $stmt->execute([$username]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
 
     if ($user && password_verify($password, $user['password'])) {
         // Start session and store user info
