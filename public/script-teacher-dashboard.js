@@ -12,7 +12,7 @@ let sections = [];
 // Load sections from database
 async function loadSections() {
   try {
-    const response = await fetch('../backend/get_sections.php');
+    const response = await fetch('backend/get_sections.php');
     const result = await response.json();
     
     if (result.success) {
@@ -71,6 +71,9 @@ function renderSections() {
     option3.textContent = section.section_name;
     chartSectionSelect.appendChild(option3);
   });
+  
+  // Update delete section selector
+  updateDeleteSectionSelect();
 }
 
 // Add new section
@@ -87,7 +90,7 @@ addSectionForm.addEventListener("submit", async (e) => {
     const formData = new FormData();
     formData.append('section_name', sectionName);
 
-    const response = await fetch('../backend/add_section.php', {
+    const response = await fetch('backend/add_section.php', {
       method: 'POST',
       body: formData
     });
@@ -117,7 +120,7 @@ async function deleteSection(sectionId, sectionName) {
     const formData = new FormData();
     formData.append('section_id', sectionId);
 
-    const response = await fetch('../backend/delete_section.php', {
+    const response = await fetch('backend/delete_section.php', {
       method: 'POST',
       body: formData
     });
@@ -214,7 +217,7 @@ document.getElementById("proficiencyForm").addEventListener("submit", async (e) 
       formData.append('girls_grades[]', grade);
     });
 
-    const response = await fetch('../backend/input_proficiency.php', {
+    const response = await fetch('backend/input_proficiency.php', {
       method: 'POST',
       body: formData
     });
@@ -343,7 +346,7 @@ function updateCharts() {
 
 async function fetchGradeData(sectionName, quarter) {
   try {
-    const response = await fetch(`../backend/get_data.php?section=${encodeURIComponent(sectionName)}&quarter=${quarter}`);
+    const response = await fetch(`backend/get_data.php?section=${encodeURIComponent(sectionName)}&quarter=${quarter}`);
     const result = await response.json();
     
     if (result.success) {
@@ -379,7 +382,7 @@ async function fetchGradeData(sectionName, quarter) {
 
 async function fetchAllGradeData(quarter) {
   try {
-    const response = await fetch('../backend/get_data.php');
+    const response = await fetch('backend/get_data.php');
     const result = await response.json();
     
     if (result.success) {
@@ -492,7 +495,7 @@ async function fetchAndDisplayProficiencyData() {
   overallContainer.innerHTML = '';
   
   try {
-    const response = await fetch('../backend/get_data.php');
+    const response = await fetch('backend/get_data.php');
     const result = await response.json();
     
     console.log('API Response:', result); // Debug log
@@ -794,6 +797,81 @@ function displayOverallProficiency(overallData, selectedSection, selectedQuarter
 document.getElementById('refreshProficiencyData').addEventListener('click', displayProficiencyData);
 document.getElementById('proficiencySection').addEventListener('change', displayProficiencyData);
 document.getElementById('proficiencyQuarter').addEventListener('change', displayProficiencyData);
+
+// Delete data functionality
+function updateDeleteSectionSelect() {
+  const deleteSectionSelect = document.getElementById('deleteSectionSelect');
+  deleteSectionSelect.innerHTML = '<option value="">-- Choose a section --</option>';
+  
+  sections.forEach(section => {
+    const option = document.createElement('option');
+    option.value = section.id;
+    option.textContent = section.section_name;
+    deleteSectionSelect.appendChild(option);
+  });
+}
+
+// Handle delete data form submission
+document.getElementById('deleteDataForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const sectionId = document.getElementById('deleteSectionSelect').value;
+  const quarter = document.getElementById('deleteQuarterSelect').value;
+  const confirmed = document.getElementById('deleteConfirmation').checked;
+  
+  if (!sectionId || !quarter) {
+    showMessage('Please select both section and quarter', 'error');
+    return;
+  }
+  
+  if (!confirmed) {
+    showMessage('Please confirm that you understand this action cannot be undone', 'error');
+    return;
+  }
+  
+  // Additional confirmation dialog
+  const sectionName = sections.find(s => s.id == sectionId)?.section_name || 'Unknown Section';
+  const confirmMessage = `Are you absolutely sure you want to delete all grade data for "${sectionName}" - Quarter ${quarter}?\n\nThis action cannot be undone!`;
+  
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+  
+  try {
+    const response = await fetch('backend/delete_data.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        section_id: sectionId,
+        quarter: quarter
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      showMessage(result.message, 'success');
+      
+      // Reset the form
+      document.getElementById('deleteDataForm').reset();
+      
+      // Refresh the proficiency data display if we're on that tab
+      if (document.getElementById('proficiencyDataTab').classList.contains('active')) {
+        displayProficiencyData();
+      }
+      
+      // Update charts
+      updateCharts();
+    } else {
+      showMessage('Delete failed: ' + result.message, 'error');
+    }
+  } catch (error) {
+    console.error('Error deleting data:', error);
+    showMessage('Error deleting data. Please try again.', 'error');
+  }
+});
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {

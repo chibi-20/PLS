@@ -154,7 +154,7 @@ async function loadSubjectOverview() {
     if (gradeFilter) params.append('grade_level', gradeFilter);
     if (quarterFilter) params.append('quarter', quarterFilter);
     
-    const response = await fetch(`../backend/admin_get_subject_proficiency.php?${params.toString()}`);
+    const response = await fetch(`backend/admin_get_subject_proficiency.php?${params.toString()}`);
     const result = await response.json();
     
     if (!result.success) {
@@ -319,7 +319,7 @@ function updateSidebarCharts(teachers) {
 
 async function loadOverallGradeDistribution() {
   try {
-    const response = await fetch('../backend/admin_get_grade_distribution.php');
+    const response = await fetch('backend/admin_get_grade_distribution.php');
     const result = await response.json();
     
     if (result.success && result.data) {
@@ -349,7 +349,7 @@ async function loadTeacherAnalytics() {
     if (subjectFilter) params.append('subject', subjectFilter);
     if (gradeFilter) params.append('grade_level', gradeFilter);
     
-    const response = await fetch(`../backend/admin_get_analytics.php?${params.toString()}`);
+    const response = await fetch(`backend/admin_get_analytics.php?${params.toString()}`);
     const result = await response.json();
     
     if (!result.success) {
@@ -450,7 +450,7 @@ function displayTeacherAnalytics(data) {
 
 async function loadSystemReports() {
   try {
-    const response = await fetch('../backend/admin_get_system_stats.php');
+    const response = await fetch('backend/admin_get_system_stats.php');
     const result = await response.json();
     
     if (!result.success) {
@@ -475,7 +475,7 @@ async function loadSystemReports() {
 
 async function populateSubjectFilters() {
   try {
-    const response = await fetch('../backend/admin_get_subjects.php');
+    const response = await fetch('backend/admin_get_subjects.php');
     const result = await response.json();
     
     if (result.success && result.data) {
@@ -543,7 +543,7 @@ function exportData() {
   }
   
   // Create download link
-  const url = `../backend/admin_export_data.php?${params.toString()}`;
+  const url = `backend/admin_export_data.php?${params.toString()}`;
   
   // Create temporary link and trigger download
   const link = document.createElement('a');
