@@ -12,13 +12,14 @@ if (!isset($_SESSION['user_id'])) {
 $userId = $_SESSION['user_id'];
 
 // Get form data
+$schoolYear = trim($_POST['school_year'] ?? '');
 $sectionName = trim($_POST['section_name'] ?? '');
 $quarter = intval($_POST['quarter'] ?? 0);
 $boysGrades = $_POST['boys_grades'] ?? [];
 $girlsGrades = $_POST['girls_grades'] ?? [];
 
-if (empty($sectionName) || $quarter < 1 || $quarter > 4) {
-    echo json_encode(["success" => false, "message" => "Section name and valid quarter are required"]);
+if (empty($schoolYear) || empty($sectionName) || $quarter < 1 || $quarter > 4) {
+    echo json_encode(["success" => false, "message" => "School year, section name and valid quarter are required"]);
     exit;
 }
 
@@ -28,14 +29,14 @@ if (empty($boysGrades) && empty($girlsGrades)) {
 }
 
 try {
-    // Verify that this section belongs to the current user
-    $stmt = $conn->prepare("SELECT id FROM sections WHERE section_name = ? AND created_by = ?");
-    $stmt->bind_param("si", $sectionName, $userId);
+    // Verify that this section belongs to the current user and has the correct school year
+    $stmt = $conn->prepare("SELECT id FROM sections WHERE section_name = ? AND created_by = ? AND school_year = ?");
+    $stmt->bind_param("sis", $sectionName, $userId, $schoolYear);
     $stmt->execute();
     $result = $stmt->get_result();
     
     if ($result->num_rows === 0) {
-        echo json_encode(["success" => false, "message" => "Section not found or not authorized"]);
+        echo json_encode(["success" => false, "message" => "Section not found or not authorized for this school year"]);
         $stmt->close();
         exit;
     }
@@ -44,14 +45,14 @@ try {
     $sectionId = $sectionRow['id'];
     $stmt->close();
     
-    // Delete existing grades for this section and quarter
-    $stmt = $conn->prepare("DELETE FROM grades WHERE section_id = ? AND quarter = ? AND created_by = ?");
-    $stmt->bind_param("iii", $sectionId, $quarter, $userId);
+    // Delete existing grades for this section, quarter, and school year
+    $stmt = $conn->prepare("DELETE FROM grades WHERE section_id = ? AND quarter = ? AND created_by = ? AND school_year = ?");
+    $stmt->bind_param("iiis", $sectionId, $quarter, $userId, $schoolYear);
     $stmt->execute();
     $stmt->close();
     
-    // Insert new grades
-    $stmt = $conn->prepare("INSERT INTO grades (section_id, quarter, student_grade, gender, created_by) VALUES (?, ?, ?, ?, ?)");
+    // Insert new grades with school year
+    $stmt = $conn->prepare("INSERT INTO grades (section_id, quarter, student_grade, gender, created_by, school_year) VALUES (?, ?, ?, ?, ?, ?)");
     
     $totalInserted = 0;
     
@@ -60,7 +61,7 @@ try {
         $grade = floatval($grade);
         if ($grade > 0 && $grade <= 100) {
             $gender = 'Male';
-            $stmt->bind_param("iidsi", $sectionId, $quarter, $grade, $gender, $userId);
+            $stmt->bind_param("iidsis", $sectionId, $quarter, $grade, $gender, $userId, $schoolYear);
             $stmt->execute();
             $totalInserted++;
         }
@@ -71,7 +72,7 @@ try {
         $grade = floatval($grade);
         if ($grade > 0 && $grade <= 100) {
             $gender = 'Female';
-            $stmt->bind_param("iidsi", $sectionId, $quarter, $grade, $gender, $userId);
+            $stmt->bind_param("iidsis", $sectionId, $quarter, $grade, $gender, $userId, $schoolYear);
             $stmt->execute();
             $totalInserted++;
         }

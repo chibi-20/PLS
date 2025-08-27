@@ -709,6 +709,105 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* LIS Comparison Styles */
+    .lis-comparison-form {
+      background: #f8fafc;
+      padding: 25px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 30px;
+    }
+
+    .comparison-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .comparison-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .comparison-card.lis-count {
+      border-left: 4px solid #3b82f6;
+    }
+
+    .comparison-card.system-count {
+      border-left: 4px solid #10b981;
+    }
+
+    .comparison-card.difference {
+      border-left: 4px solid #f59e0b;
+    }
+
+    .comparison-card.percentage {
+      border-left: 4px solid #8b5cf6;
+    }
+
+    .comparison-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 600;
+      color: #4b5563;
+      margin-bottom: 10px;
+      font-size: 0.9em;
+    }
+
+    .comparison-number {
+      font-size: 2.2em;
+      font-weight: bold;
+      color: #1f2937;
+      margin-bottom: 5px;
+    }
+
+    .comparison-subtitle {
+      color: #6b7280;
+      font-size: 0.85em;
+    }
+
+    #compareLisData {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      width: 100%;
+    }
+
+    #compareLisData:hover {
+      background: #2563eb;
+    }
+
+    #comparisonDetails {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .status-positive {
+      color: #10b981;
+    }
+
+    .status-negative {
+      color: #ef4444;
+    }
+
+    .status-warning {
+      color: #f59e0b;
+    }
   </style>
 </head>
 <body>
@@ -746,6 +845,7 @@
           <button class="tab-button active" data-tab="subjectOverviewTab">📚 Subject Overview</button>
           <button class="tab-button" data-tab="teacherAnalyticsTab">👨‍🏫 Teacher Analytics</button>
           <button class="tab-button" data-tab="systemReportsTab">📈 System Reports</button>
+          <button class="tab-button" data-tab="lisComparisonTab">📊 LIS Comparison</button>
         </div>
 
         <!-- Subject Overview Tab -->
@@ -753,6 +853,17 @@
           <h2>📚 Subject Overview</h2>
           
           <div class="filter-controls">
+            <div class="filter-group">
+              <label for="filterSchoolYear">School Year:</label>
+              <select id="filterSchoolYear">
+                <option value="">All School Years</option>
+                <option value="2025-2026">2025-2026</option>
+                <option value="2026-2027">2026-2027</option>
+                <option value="2027-2028">2027-2028</option>
+                <option value="2028-2029">2028-2029</option>
+                <option value="2029-2030">2029-2030</option>
+              </select>
+            </div>
             <div class="filter-group">
               <label for="filterSubject">Filter by Subject:</label>
               <select id="filterSubject">
@@ -796,6 +907,17 @@
           
           <div class="filter-controls">
             <div class="filter-group">
+              <label for="analyticsSchoolYear">School Year:</label>
+              <select id="analyticsSchoolYear">
+                <option value="">All School Years</option>
+                <option value="2025-2026">2025-2026</option>
+                <option value="2026-2027">2026-2027</option>
+                <option value="2027-2028">2027-2028</option>
+                <option value="2028-2029">2028-2029</option>
+                <option value="2029-2030">2029-2030</option>
+              </select>
+            </div>
+            <div class="filter-group">
               <label for="analyticsSubject">Subject:</label>
               <select id="analyticsSubject">
                 <option value="">All Subjects</option>
@@ -809,6 +931,16 @@
                 <option value="Grade 8">Grade 8</option>
                 <option value="Grade 9">Grade 9</option>
                 <option value="Grade 10">Grade 10</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="analyticsQuarter">Quarter:</label>
+              <select id="analyticsQuarter">
+                <option value="">All Quarters</option>
+                <option value="1">Quarter 1</option>
+                <option value="2">Quarter 2</option>
+                <option value="3">Quarter 3</option>
+                <option value="4">Quarter 4</option>
               </select>
             </div>
           </div>
@@ -867,6 +999,121 @@
 
           <div id="systemReportsData">
             <!-- System reports will be populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- LIS Comparison Tab -->
+        <div id="lisComparisonTab" class="tab-content">
+          <h2>📊 LIS Student Count Comparison</h2>
+          <p style="color: #6b7280; margin-bottom: 25px;">
+            Compare the official student count from the Learner's Information System (LIS) with the actual number of students who have proficiency data entered in the system.
+          </p>
+          
+          <div class="lis-comparison-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="lisSchoolYear">School Year:</label>
+                <select id="lisSchoolYear">
+                  <option value="2025-2026">2025-2026</option>
+                  <option value="2026-2027">2026-2027</option>
+                  <option value="2027-2028">2027-2028</option>
+                  <option value="2028-2029">2028-2029</option>
+                  <option value="2029-2030">2029-2030</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="lisSubject">Subject:</label>
+                <select id="lisSubject">
+                  <option value="">Select Subject</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="lisGradeLevel">Grade Level:</label>
+                <select id="lisGradeLevel">
+                  <option value="">Select Grade Level</option>
+                  <option value="Grade 7">Grade 7</option>
+                  <option value="Grade 8">Grade 8</option>
+                  <option value="Grade 9">Grade 9</option>
+                  <option value="Grade 10">Grade 10</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="lisQuarter">Quarter:</label>
+                <select id="lisQuarter">
+                  <option value="">Select Quarter</option>
+                  <option value="1">Quarter 1</option>
+                  <option value="2">Quarter 2</option>
+                  <option value="3">Quarter 3</option>
+                  <option value="4">Quarter 4</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="lisStudentCount">Official LIS Student Count:</label>
+                <input type="number" id="lisStudentCount" placeholder="Enter the official student count from LIS" min="0" max="1000">
+                <small style="color: #6b7280; font-size: 0.85em;">
+                  Enter the exact number of students for this subject, grade, and quarter as recorded in LIS
+                </small>
+              </div>
+              
+              <div class="form-group" style="display: flex; align-items: end;">
+                <button type="button" id="compareLisData" onclick="performLisComparison()">
+                  🔍 Compare Data
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Comparison Results -->
+          <div id="lisComparisonResults" style="display: none;">
+            <h3>📈 Comparison Results</h3>
+            
+            <div class="comparison-summary">
+              <div class="comparison-card lis-count">
+                <div class="comparison-title">
+                  <span>📋</span>
+                  LIS Official Count
+                </div>
+                <div class="comparison-number" id="lisOfficialCount">0</div>
+                <div class="comparison-subtitle">Students per LIS</div>
+              </div>
+              
+              <div class="comparison-card system-count">
+                <div class="comparison-title">
+                  <span>💾</span>
+                  System Count
+                </div>
+                <div class="comparison-number" id="systemStudentCount">0</div>
+                <div class="comparison-subtitle">Students with proficiency data</div>
+              </div>
+              
+              <div class="comparison-card difference">
+                <div class="comparison-title">
+                  <span>📊</span>
+                  Difference
+                </div>
+                <div class="comparison-number" id="countDifference">0</div>
+                <div class="comparison-subtitle" id="differenceStatus">Perfect match</div>
+              </div>
+              
+              <div class="comparison-card percentage">
+                <div class="comparison-title">
+                  <span>📈</span>
+                  Data Coverage
+                </div>
+                <div class="comparison-number" id="dataCoverage">100%</div>
+                <div class="comparison-subtitle">Students with data</div>
+              </div>
+            </div>
+            
+            <div id="comparisonDetails">
+              <!-- Detailed comparison results will be displayed here -->
+            </div>
           </div>
         </div>
       </main>
@@ -950,9 +1197,138 @@
           loadTeacherAnalytics();
         } else if (targetTab === 'systemReportsTab') {
           loadSystemReports();
+        } else if (targetTab === 'lisComparisonTab') {
+          populateLisSubjects();
         }
       });
     });
+
+    // LIS Comparison functionality
+    async function performLisComparison() {
+      const schoolYear = document.getElementById('lisSchoolYear').value;
+      const subject = document.getElementById('lisSubject').value;
+      const gradeLevel = document.getElementById('lisGradeLevel').value;
+      const quarter = document.getElementById('lisQuarter').value;
+      const lisCount = parseInt(document.getElementById('lisStudentCount').value);
+      
+      if (!schoolYear || !subject || !gradeLevel || !quarter || !lisCount) {
+        alert('Please fill in all fields before comparing.');
+        return;
+      }
+      
+      try {
+        // Show loading state
+        document.getElementById('compareLisData').textContent = '🔄 Comparing...';
+        document.getElementById('compareLisData').disabled = true;
+        
+        // Get system student count for the specified criteria
+        const response = await fetch(`backend/admin_get_lis_comparison.php?school_year=${encodeURIComponent(schoolYear)}&subject=${encodeURIComponent(subject)}&grade_level=${encodeURIComponent(gradeLevel)}&quarter=${quarter}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          const systemCount = data.student_count;
+          const difference = systemCount - lisCount;
+          const coverage = lisCount > 0 ? Math.round((systemCount / lisCount) * 100) : 0;
+          
+          // Update comparison cards
+          document.getElementById('lisOfficialCount').textContent = lisCount.toLocaleString();
+          document.getElementById('systemStudentCount').textContent = systemCount.toLocaleString();
+          document.getElementById('countDifference').textContent = difference >= 0 ? `+${difference}` : difference.toString();
+          document.getElementById('dataCoverage').textContent = `${coverage}%`;
+          
+          // Update status and styling
+          const differenceElement = document.getElementById('countDifference');
+          const statusElement = document.getElementById('differenceStatus');
+          const coverageElement = document.getElementById('dataCoverage');
+          
+          if (difference === 0) {
+            differenceElement.className = 'comparison-number status-positive';
+            statusElement.textContent = 'Perfect match!';
+            statusElement.className = 'comparison-subtitle status-positive';
+          } else if (difference > 0) {
+            differenceElement.className = 'comparison-number status-warning';
+            statusElement.textContent = 'More data than LIS';
+            statusElement.className = 'comparison-subtitle status-warning';
+          } else {
+            differenceElement.className = 'comparison-number status-negative';
+            statusElement.textContent = 'Missing students';
+            statusElement.className = 'comparison-subtitle status-negative';
+          }
+          
+          if (coverage >= 95) {
+            coverageElement.className = 'comparison-number status-positive';
+          } else if (coverage >= 80) {
+            coverageElement.className = 'comparison-number status-warning';
+          } else {
+            coverageElement.className = 'comparison-number status-negative';
+          }
+          
+          // Show detailed information
+          const detailsHtml = `
+            <h4>📋 Comparison Details</h4>
+            <div style="margin-bottom: 15px;">
+              <strong>Query Parameters:</strong><br>
+              School Year: ${schoolYear} | Subject: ${subject} | Grade: ${gradeLevel} | Quarter: ${quarter}
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <strong>Analysis:</strong><br>
+              ${difference === 0 
+                ? '✅ Perfect match! The number of students in the system matches the LIS count exactly.' 
+                : difference > 0 
+                  ? `⚠️ There are ${Math.abs(difference)} more students with proficiency data than the official LIS count. This might indicate duplicate entries or students from other sections.`
+                  : `❌ There are ${Math.abs(difference)} students missing from the proficiency data. ${coverage}% of the expected students have data entered.`
+              }
+            </div>
+            
+            ${data.section_breakdown ? `
+              <div>
+                <strong>Section Breakdown:</strong><br>
+                ${data.section_breakdown.map(section => 
+                  `• ${section.section_name}: ${section.student_count} students`
+                ).join('<br>')}
+              </div>
+            ` : ''}
+          `;
+          
+          document.getElementById('comparisonDetails').innerHTML = detailsHtml;
+          document.getElementById('lisComparisonResults').style.display = 'block';
+          
+        } else {
+          alert('Error getting system data: ' + data.message);
+        }
+        
+      } catch (error) {
+        console.error('Error performing LIS comparison:', error);
+        alert('Error performing comparison. Please try again.');
+      } finally {
+        // Reset button state
+        document.getElementById('compareLisData').textContent = '🔍 Compare Data';
+        document.getElementById('compareLisData').disabled = false;
+      }
+    }
+    
+    // Populate LIS subject dropdown
+    async function populateLisSubjects() {
+      try {
+        const response = await fetch('backend/admin_get_subjects.php');
+        const data = await response.json();
+        
+        if (data.success) {
+          const select = document.getElementById('lisSubject');
+          select.innerHTML = '<option value="">Select Subject</option>';
+          
+          data.subjects.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject;
+            option.textContent = subject;
+            select.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading subjects for LIS comparison:', error);
+      }
+    }
 
     // Logout functionality
     function logout() {
@@ -979,6 +1355,7 @@
       loadSubjectOverview();
       loadSystemReports();
       populateSubjectFilters();
+      populateLisSubjects();
     });
   </script>
 </body>

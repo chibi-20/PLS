@@ -18,6 +18,7 @@ try {
     $data = json_decode(file_get_contents("php://input"), true);
     $section_id = $data['section_id'] ?? '';
     $quarter = $data['quarter'] ?? '';
+    $school_year = $data['school_year'] ?? '';
     
     if (empty($section_id) || empty($quarter)) {
         echo json_encode(["success" => false, "message" => "Section and quarter are required"]);

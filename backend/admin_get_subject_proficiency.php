@@ -11,6 +11,7 @@ require_once 'db.php';
 
 try {
     // Get filter parameters
+    $schoolYearFilter = trim($_GET['school_year'] ?? '');
     $subjectFilter = trim($_GET['subject'] ?? '');
     $gradeLevelFilter = trim($_GET['grade_level'] ?? '');
     $quarterFilter = intval($_GET['quarter'] ?? 0);
@@ -40,6 +41,12 @@ try {
     $types = "";
     
     // Add filters
+    if ($schoolYearFilter) {
+        $query .= " AND g.school_year = ?";
+        $params[] = $schoolYearFilter;
+        $types .= "s";
+    }
+    
     if ($subjectFilter) {
         $query .= " AND u.subject_taught = ?";
         $params[] = $subjectFilter;

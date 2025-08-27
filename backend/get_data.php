@@ -16,19 +16,30 @@ $userId = $_SESSION['user_id'];
 error_log("User ID: " . $userId); // Debug log
 
 // Get query parameters
+$schoolYear = trim($_GET['school_year'] ?? '');
 $sectionName = trim($_GET['section'] ?? '');
 $quarter = intval($_GET['quarter'] ?? 0);
 
 try {
     if ($sectionName && $quarter > 0) {
         // Get specific section and quarter data
-        $stmt = $conn->prepare("
+        $query = "
             SELECT g.student_grade, g.gender 
             FROM grades g 
             JOIN sections s ON g.section_id = s.id 
             WHERE s.section_name = ? AND g.quarter = ? AND g.created_by = ?
-        ");
-        $stmt->bind_param("sii", $sectionName, $quarter, $userId);
+        ";
+        $params = [$sectionName, $quarter, $userId];
+        $types = "sii";
+        
+        if ($schoolYear) {
+            $query .= " AND g.school_year = ?";
+            $params[] = $schoolYear;
+            $types .= "s";
+        }
+        
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $result = $stmt->get_result();
         
@@ -57,14 +68,25 @@ try {
         // Get all data for the current user
         error_log("Getting all data for user: " . $userId); // Debug log
         
-        $stmt = $conn->prepare("
+        $query = "
             SELECT s.section_name, g.quarter, g.student_grade, g.gender 
             FROM grades g 
             JOIN sections s ON g.section_id = s.id 
             WHERE g.created_by = ?
-            ORDER BY s.section_name, g.quarter
-        ");
-        $stmt->bind_param("i", $userId);
+        ";
+        $params = [$userId];
+        $types = "i";
+        
+        if ($schoolYear) {
+            $query .= " AND g.school_year = ?";
+            $params[] = $schoolYear;
+            $types .= "s";
+        }
+        
+        $query .= " ORDER BY s.section_name, g.quarter";
+        
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $result = $stmt->get_result();
         

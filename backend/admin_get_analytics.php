@@ -5,8 +5,10 @@ require_once 'db.php';
 
 try {
     // Get filter parameters
+    $schoolYearFilter = trim($_GET['school_year'] ?? '');
     $subjectFilter = trim($_GET['subject'] ?? '');
     $gradeLevelFilter = trim($_GET['grade_level'] ?? '');
+    $quarterFilter = trim($_GET['quarter'] ?? '');
     
     // Build query for detailed analytics - exclude admin users
     $query = "
@@ -34,6 +36,12 @@ try {
     $types = "";
     
     // Add filters
+    if ($schoolYearFilter) {
+        $query .= " AND g.school_year = ?";
+        $params[] = $schoolYearFilter;
+        $types .= "s";
+    }
+    
     if ($subjectFilter) {
         $query .= " AND u.subject_taught = ?";
         $params[] = $subjectFilter;
@@ -44,6 +52,12 @@ try {
         $query .= " AND u.grade_level = ?";
         $params[] = $gradeLevelFilter;
         $types .= "s";
+    }
+    
+    if ($quarterFilter) {
+        $query .= " AND g.quarter = ?";
+        $params[] = $quarterFilter;
+        $types .= "i";
     }
     
     $query .= " GROUP BY u.id HAVING total_students > 0 ORDER BY avg_performance DESC";

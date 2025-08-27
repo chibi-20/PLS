@@ -33,9 +33,10 @@ try {
     }
     $stmt->close();
     
-    // Insert new section
-    $stmt = $conn->prepare("INSERT INTO sections (section_name, created_by) VALUES (?, ?)");
-    $stmt->bind_param("si", $sectionName, $userId);
+    // Insert new section with current school year
+    $currentSchoolYear = "2025-2026"; // Current academic year
+    $stmt = $conn->prepare("INSERT INTO sections (section_name, created_by, school_year) VALUES (?, ?, ?)");
+    $stmt->bind_param("sis", $sectionName, $userId, $currentSchoolYear);
     $stmt->execute();
     $sectionId = $stmt->insert_id;
     $stmt->close();

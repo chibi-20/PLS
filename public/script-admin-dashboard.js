@@ -134,15 +134,19 @@ function initializeCharts() {
 
 function setupEventListeners() {
   // Filter change listeners
+  document.getElementById('filterSchoolYear').addEventListener('change', loadSubjectOverview);
   document.getElementById('filterSubject').addEventListener('change', loadSubjectOverview);
   document.getElementById('filterGradeLevel').addEventListener('change', loadSubjectOverview);
   document.getElementById('filterQuarter').addEventListener('change', loadSubjectOverview);
   
+  document.getElementById('analyticsSchoolYear').addEventListener('change', loadTeacherAnalytics);
   document.getElementById('analyticsSubject').addEventListener('change', loadTeacherAnalytics);
   document.getElementById('analyticsGrade').addEventListener('change', loadTeacherAnalytics);
+  document.getElementById('analyticsQuarter').addEventListener('change', loadTeacherAnalytics);
 }
 
 async function loadSubjectOverview() {
+  const schoolYearFilter = document.getElementById('filterSchoolYear').value;
   const subjectFilter = document.getElementById('filterSubject').value;
   const gradeFilter = document.getElementById('filterGradeLevel').value;
   const quarterFilter = document.getElementById('filterQuarter').value;
@@ -150,6 +154,7 @@ async function loadSubjectOverview() {
   try {
     // Build query parameters
     const params = new URLSearchParams();
+    if (schoolYearFilter) params.append('school_year', schoolYearFilter);
     if (subjectFilter) params.append('subject', subjectFilter);
     if (gradeFilter) params.append('grade_level', gradeFilter);
     if (quarterFilter) params.append('quarter', quarterFilter);
@@ -341,13 +346,17 @@ async function loadOverallGradeDistribution() {
 }
 
 async function loadTeacherAnalytics() {
+  const schoolYearFilter = document.getElementById('analyticsSchoolYear').value;
   const subjectFilter = document.getElementById('analyticsSubject').value;
   const gradeFilter = document.getElementById('analyticsGrade').value;
+  const quarterFilter = document.getElementById('analyticsQuarter').value;
   
   try {
     const params = new URLSearchParams();
+    if (schoolYearFilter) params.append('school_year', schoolYearFilter);
     if (subjectFilter) params.append('subject', subjectFilter);
     if (gradeFilter) params.append('grade_level', gradeFilter);
+    if (quarterFilter) params.append('quarter', quarterFilter);
     
     const response = await fetch(`backend/admin_get_analytics.php?${params.toString()}`);
     const result = await response.json();

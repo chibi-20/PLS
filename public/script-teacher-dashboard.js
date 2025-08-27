@@ -184,6 +184,7 @@ function showMessage(message, type = 'info') {
 // Handle grade submission
 document.getElementById("proficiencyForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  const schoolYear = document.getElementById("schoolYearInput").value;
   const section = sectionSelect.value;
   const quarter = document.getElementById("quarterInput").value;
   const boysGrades = document.getElementById("gradesBoys").value.trim();
@@ -204,6 +205,7 @@ document.getElementById("proficiencyForm").addEventListener("submit", async (e) 
 
   try {
     const formData = new FormData();
+    formData.append('school_year', schoolYear);
     formData.append('section_name', section);
     formData.append('quarter', quarter);
     
@@ -488,6 +490,7 @@ function displayProficiencyData() {
 async function fetchAndDisplayProficiencyData() {
   const container = document.getElementById('proficiencyDataContainer');
   const overallContainer = document.getElementById('overallProficiencyContainer');
+  const selectedSchoolYear = document.getElementById('proficiencySchoolYear').value;
   const selectedSection = document.getElementById('proficiencySection').value;
   const selectedQuarter = document.getElementById('proficiencyQuarter').value;
   
@@ -495,7 +498,14 @@ async function fetchAndDisplayProficiencyData() {
   overallContainer.innerHTML = '';
   
   try {
-    const response = await fetch('backend/get_data.php');
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (selectedSchoolYear) params.append('school_year', selectedSchoolYear);
+    if (selectedSection) params.append('section', selectedSection);
+    if (selectedQuarter) params.append('quarter', selectedQuarter);
+    
+    const url = params.toString() ? `backend/get_data.php?${params.toString()}` : 'backend/get_data.php';
+    const response = await fetch(url);
     const result = await response.json();
     
     console.log('API Response:', result); // Debug log
@@ -795,6 +805,7 @@ function displayOverallProficiency(overallData, selectedSection, selectedQuarter
 
 // Event listeners for proficiency data tab
 document.getElementById('refreshProficiencyData').addEventListener('click', displayProficiencyData);
+document.getElementById('proficiencySchoolYear').addEventListener('change', displayProficiencyData);
 document.getElementById('proficiencySection').addEventListener('change', displayProficiencyData);
 document.getElementById('proficiencyQuarter').addEventListener('change', displayProficiencyData);
 

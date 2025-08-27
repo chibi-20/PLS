@@ -257,19 +257,32 @@
       border: 1px solid #e2e8f0;
       margin-bottom: 25px;
       display: grid;
-      grid-template-columns: 1fr 1fr auto;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 15px;
       align-items: end;
+    }
+    
+    .proficiency-filters .filter-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .proficiency-filters .button-group {
+      display: flex;
+      align-items: end;
+      min-width: 150px;
     }
 
     .proficiency-filters label {
       margin-bottom: 5px;
       font-weight: 600;
       color: #4a5568;
+      display: block;
     }
 
     .proficiency-filters select {
       margin: 0;
+      width: 100%;
     }
 
     #refreshProficiencyData {
@@ -277,6 +290,7 @@
       color: white;
       border: none;
       padding: 12px 20px;
+      width: 100%;
       border-radius: 8px;
       cursor: pointer;
       font-weight: 600;
@@ -762,6 +776,15 @@
         <div class="tab-content" id="inputProficiencyTab">
           <h2>Input Student Grades</h2>
           <form id="proficiencyForm">
+            <label for="schoolYearInput">School Year:</label>
+            <select id="schoolYearInput">
+              <option value="2025-2026">2025-2026</option>
+              <option value="2026-2027">2026-2027</option>
+              <option value="2027-2028">2027-2028</option>
+              <option value="2028-2029">2028-2029</option>
+              <option value="2029-2030">2029-2030</option>
+            </select>
+
             <label for="sectionSelect">Select Section:</label>
             <select id="sectionSelect">
               <option value="">-- Choose a section --</option>
@@ -821,21 +844,39 @@
           <h2>Proficiency Data Overview</h2>
           
           <div class="proficiency-filters">
-            <label for="proficiencySection">Filter by Section:</label>
-            <select id="proficiencySection">
-              <option value="">All Sections</option>
-            </select>
+            <div class="filter-group">
+              <label for="proficiencySchoolYear">School Year:</label>
+              <select id="proficiencySchoolYear">
+                <option value="">All School Years</option>
+                <option value="2025-2026">2025-2026</option>
+                <option value="2026-2027">2026-2027</option>
+                <option value="2027-2028">2027-2028</option>
+                <option value="2028-2029">2028-2029</option>
+                <option value="2029-2030">2029-2030</option>
+              </select>
+            </div>
             
-            <label for="proficiencyQuarter">Filter by Quarter:</label>
-            <select id="proficiencyQuarter">
-              <option value="">All Quarters</option>
-              <option value="1">Quarter 1</option>
-              <option value="2">Quarter 2</option>
-              <option value="3">Quarter 3</option>
-              <option value="4">Quarter 4</option>
-            </select>
+            <div class="filter-group">
+              <label for="proficiencySection">Filter by Section:</label>
+              <select id="proficiencySection">
+                <option value="">All Sections</option>
+              </select>
+            </div>
             
-            <button type="button" id="refreshProficiencyData">🔄 Refresh Data</button>
+            <div class="filter-group">
+              <label for="proficiencyQuarter">Filter by Quarter:</label>
+              <select id="proficiencyQuarter">
+                <option value="">All Quarters</option>
+                <option value="1">Quarter 1</option>
+                <option value="2">Quarter 2</option>
+                <option value="3">Quarter 3</option>
+                <option value="4">Quarter 4</option>
+              </select>
+            </div>
+            
+            <div class="button-group">
+              <button type="button" id="refreshProficiencyData">🔄 Refresh Data</button>
+            </div>
           </div>
 
           <!-- Overall Proficiency Summary -->
