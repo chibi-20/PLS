@@ -73,7 +73,7 @@
       <button type="submit" style="margin-top:20px;">Register</button>
     </form>
 
-    <p>Already have an account? <a href="login.html">Login</a></p>
+    <p>Already have an account? <a href="index.html">Login</a></p>
   </div>
 
   <script>
@@ -118,11 +118,11 @@
           messageDiv.style.backgroundColor = '#d4edda';
           messageDiv.style.color = '#155724';
           messageDiv.style.border = '1px solid #c3e6cb';
-          messageDiv.textContent = result.message;
+          messageDiv.textContent = result.message + ' Redirecting to login page...';
           
           // Redirect to login page after successful registration
           setTimeout(() => {
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
           }, 2000);
         } else {
           messageDiv.style.display = 'block';

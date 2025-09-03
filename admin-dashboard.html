@@ -481,6 +481,98 @@
       font-weight: 600;
     }
 
+    /* New detailed proficiency levels styles */
+    .proficiency-levels-detailed {
+      display: grid;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .prof-level {
+      background: white;
+      border-radius: 6px;
+      padding: 8px 10px;
+      border: 1px solid #e2e8f0;
+      font-size: 0.85em;
+    }
+
+    .prof-level.excellent {
+      border-left: 4px solid #00D2FF;
+      background: #f0fffe;
+    }
+
+    .prof-level.very-good {
+      border-left: 4px solid #10b981;
+      background: #f0fff4;
+    }
+
+    .prof-level.good {
+      border-left: 4px solid #4CAF50;
+      background: #f0fff4;
+    }
+
+    .prof-level.satisfactory {
+      border-left: 4px solid #3b82f6;
+      background: #eff6ff;
+    }
+
+    .prof-level.fair {
+      border-left: 4px solid #f59e0b;
+      background: #fffbeb;
+    }
+
+    .prof-level.needs-improvement {
+      border-left: 4px solid #ef4444;
+      background: #fef2f2;
+    }
+
+    .prof-level.poor {
+      border-left: 4px solid #dc2626;
+      background: #fef2f2;
+    }
+
+    .prof-level-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .prof-level .prof-label {
+      font-weight: 600;
+      color: #374151;
+      font-size: 0.8em;
+    }
+
+    .prof-level .prof-count {
+      font-weight: 700;
+      color: #1f2937;
+      font-size: 0.9em;
+    }
+
+    .gender-breakdown {
+      display: flex;
+      gap: 8px;
+      font-size: 0.75em;
+    }
+
+    .gender-count {
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .quarter-stats {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 5px;
+    }
+
+    .quarter-stats .stat-badge {
+      font-size: 0.75em;
+      padding: 3px 6px;
+    }
+
     /* Analytics Table */
     .analytics-table-container {
       background: white;
@@ -561,6 +653,37 @@
     .proficiency-cell.fair { color: #FF9800; }
     .proficiency-cell.needs-improvement { color: #FF5722; }
     .proficiency-cell.poor { color: #F44336; }
+
+    /* Teacher Analytics Gender Breakdown Styles */
+    .gender-split {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      align-items: center;
+    }
+
+    .proficiency-details {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .total-count {
+      font-size: 1.1em;
+      font-weight: 700;
+    }
+
+    .gender-breakdown-small {
+      display: flex;
+      gap: 6px;
+      font-size: 0.75em;
+    }
+
+    .gender-breakdown-small .gender-count {
+      color: #6b7280;
+      font-weight: 500;
+    }
 
     /* Export Modal */
     .modal {
@@ -1333,7 +1456,20 @@
     // Logout functionality
     function logout() {
       if (confirm('Are you sure you want to logout?')) {
-        window.location.href = 'backend/logout.php';
+        // Clear session storage
+        sessionStorage.clear();
+        
+        // Make logout API call
+        fetch('backend/logout.php', {
+          method: 'POST'
+        })
+        .then(() => {
+          window.location.href = 'index.html';
+        })
+        .catch(() => {
+          // Even if logout fails, redirect to login
+          window.location.href = 'index.html';
+        });
       }
     }
 
@@ -1348,7 +1484,7 @@
       // Check if user is admin
       if (userInfo.role !== 'admin') {
         alert('Admin access required');
-        window.location.href = './login.html';
+        window.location.href = './index.html';
         return;
       }
       

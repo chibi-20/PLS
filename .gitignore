@@ -1,0 +1,45 @@
+# XAMPP and local development files
+*.log
+*.tmp
+*~
+.DS_Store
+Thumbs.db
+
+# Database files (don't commit actual database)
+*.sql.backup
+*.db
+
+# PHP temporary files
+*.php.bak
+*.php~
+
+# Development and test files
+test_*.php
+debug_*.php
+*_test.php
+*_debug.php
+
+# Migration files (after they've been run)
+database_migration.php
+run_migration.php
+*_migration_*.php
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local configuration files
+config.local.php
+db.local.php
+
+# Backup files
+*_backup.*
+backup_*
+*.backup
+
+# Cache and session files
+cache/
+sessions/
+temp/

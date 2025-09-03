@@ -947,11 +947,11 @@ function logout() {
       method: 'POST'
     })
     .then(() => {
-      window.location.href = 'login.html';
+      window.location.href = 'index.html';
     })
     .catch(() => {
       // Even if logout fails, redirect to login
-      window.location.href = 'login.html';
+      window.location.href = 'index.html';
     });
   }
 }

@@ -24,9 +24,9 @@ try {
     if ($sectionName && $quarter > 0) {
         // Get specific section and quarter data
         $query = "
-            SELECT g.student_grade, g.gender 
-            FROM grades g 
-            JOIN sections s ON g.section_id = s.id 
+            SELECT g.student_grade, g.gender
+            FROM grades g
+            JOIN sections s ON g.section_id = s.id
             WHERE s.section_name = ? AND g.quarter = ? AND g.created_by = ?
         ";
         $params = [$sectionName, $quarter, $userId];
@@ -36,9 +36,7 @@ try {
             $query .= " AND g.school_year = ?";
             $params[] = $schoolYear;
             $types .= "s";
-        }
-        
-        $stmt = $conn->prepare($query);
+        }        $stmt = $conn->prepare($query);
         $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $result = $stmt->get_result();

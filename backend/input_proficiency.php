@@ -29,14 +29,14 @@ if (empty($boysGrades) && empty($girlsGrades)) {
 }
 
 try {
-    // Verify that this section belongs to the current user and has the correct school year
-    $stmt = $conn->prepare("SELECT id FROM sections WHERE section_name = ? AND created_by = ? AND school_year = ?");
-    $stmt->bind_param("sis", $sectionName, $userId, $schoolYear);
+    // Verify that this section belongs to the current user
+    $stmt = $conn->prepare("SELECT id FROM sections WHERE section_name = ? AND created_by = ?");
+    $stmt->bind_param("si", $sectionName, $userId);
     $stmt->execute();
     $result = $stmt->get_result();
     
     if ($result->num_rows === 0) {
-        echo json_encode(["success" => false, "message" => "Section not found or not authorized for this school year"]);
+        echo json_encode(["success" => false, "message" => "Section not found or not authorized"]);
         $stmt->close();
         exit;
     }

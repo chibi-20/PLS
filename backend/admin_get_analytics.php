@@ -25,7 +25,26 @@ try {
             SUM(CASE WHEN g.student_grade >= 85 AND g.student_grade < 90 THEN 1 ELSE 0 END) as satisfactory_count,
             SUM(CASE WHEN g.student_grade >= 80 AND g.student_grade < 85 THEN 1 ELSE 0 END) as fair_count,
             SUM(CASE WHEN g.student_grade >= 75 AND g.student_grade < 80 THEN 1 ELSE 0 END) as needs_improvement_count,
-            SUM(CASE WHEN g.student_grade < 75 THEN 1 ELSE 0 END) as poor_count
+            SUM(CASE WHEN g.student_grade < 75 THEN 1 ELSE 0 END) as poor_count,
+            -- Gender breakdown by proficiency level
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade >= 98 THEN 1 ELSE 0 END) as excellent_male_count,
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade >= 95 AND g.student_grade < 98 THEN 1 ELSE 0 END) as very_good_male_count,
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade >= 90 AND g.student_grade < 95 THEN 1 ELSE 0 END) as good_male_count,
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade >= 85 AND g.student_grade < 90 THEN 1 ELSE 0 END) as satisfactory_male_count,
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade >= 80 AND g.student_grade < 85 THEN 1 ELSE 0 END) as fair_male_count,
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade >= 75 AND g.student_grade < 80 THEN 1 ELSE 0 END) as needs_improvement_male_count,
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade < 75 THEN 1 ELSE 0 END) as poor_male_count,
+            -- Female counts by proficiency level
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade >= 98 THEN 1 ELSE 0 END) as excellent_female_count,
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade >= 95 AND g.student_grade < 98 THEN 1 ELSE 0 END) as very_good_female_count,
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade >= 90 AND g.student_grade < 95 THEN 1 ELSE 0 END) as good_female_count,
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade >= 85 AND g.student_grade < 90 THEN 1 ELSE 0 END) as satisfactory_female_count,
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade >= 80 AND g.student_grade < 85 THEN 1 ELSE 0 END) as fair_female_count,
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade >= 75 AND g.student_grade < 80 THEN 1 ELSE 0 END) as needs_improvement_female_count,
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade < 75 THEN 1 ELSE 0 END) as poor_female_count,
+            -- Total gender counts
+            SUM(CASE WHEN g.gender = 'Male' THEN 1 ELSE 0 END) as total_male_count,
+            SUM(CASE WHEN g.gender = 'Female' THEN 1 ELSE 0 END) as total_female_count
         FROM users u
         LEFT JOIN sections s ON u.id = s.created_by
         LEFT JOIN grades g ON s.id = g.section_id
@@ -86,7 +105,25 @@ try {
             'satisfactory_count' => intval($row['satisfactory_count']),
             'fair_count' => intval($row['fair_count']),
             'needs_improvement_count' => intval($row['needs_improvement_count']),
-            'poor_count' => intval($row['poor_count'])
+            'poor_count' => intval($row['poor_count']),
+            // Gender breakdown by proficiency level
+            'excellent_male_count' => intval($row['excellent_male_count']),
+            'very_good_male_count' => intval($row['very_good_male_count']),
+            'good_male_count' => intval($row['good_male_count']),
+            'satisfactory_male_count' => intval($row['satisfactory_male_count']),
+            'fair_male_count' => intval($row['fair_male_count']),
+            'needs_improvement_male_count' => intval($row['needs_improvement_male_count']),
+            'poor_male_count' => intval($row['poor_male_count']),
+            'excellent_female_count' => intval($row['excellent_female_count']),
+            'very_good_female_count' => intval($row['very_good_female_count']),
+            'good_female_count' => intval($row['good_female_count']),
+            'satisfactory_female_count' => intval($row['satisfactory_female_count']),
+            'fair_female_count' => intval($row['fair_female_count']),
+            'needs_improvement_female_count' => intval($row['needs_improvement_female_count']),
+            'poor_female_count' => intval($row['poor_female_count']),
+            // Total gender counts
+            'total_male_count' => intval($row['total_male_count']),
+            'total_female_count' => intval($row['total_female_count'])
         ];
     }
     

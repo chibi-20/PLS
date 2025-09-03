@@ -1,139 +1,101 @@
 <?php
-session_start();
-require_once 'db.php';
+// Force immediate CSV download
+header('Content-Type: text/csv; charset=utf-8');
+header('Content-Disposition: attachment; filename="teacher_analytics_export_' . date('Y-m-d_H-i-s') . '.csv"');
+header('Cache-Control: no-cache, must-revalidate');
+header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
 
-// Check for admin access (for production, uncomment this)
-// if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-//     echo json_encode(["success" => false, "message" => "Admin access required"]);
-//     exit;
-// }
+// Clear any output buffer
+while (ob_get_level()) {
+    ob_end_clean();
+}
 
 try {
-    // Get filter parameters
-    $exportType = trim($_GET['type'] ?? 'all'); // 'all', 'subject', 'grade'
-    $subjectFilter = trim($_GET['subject'] ?? '');
-    $gradeLevelFilter = trim($_GET['grade_level'] ?? '');
-    $format = trim($_GET['format'] ?? 'csv'); // 'csv' or 'json'
-    
-    // Build the comprehensive export query
+    // Database connection
+    $conn = new mysqli("localhost", "root", "", "proficiency_tracker");
+
+    if ($conn->connect_error) {
+        echo "Error,Database connection failed\n";
+        exit;
+    }
+
+    // Query for teacher analytics data
     $query = "
         SELECT 
-            u.fullname as teacher_name,
+            u.fullname,
             u.subject_taught,
             u.grade_level,
-            s.section_name,
-            g.quarter,
-            g.student_grade,
-            g.gender,
-            g.created_at,
-            CASE 
-                WHEN g.student_grade >= 98 THEN 'Excellent'
-                WHEN g.student_grade >= 95 THEN 'Very Good'
-                WHEN g.student_grade >= 90 THEN 'Good'
-                WHEN g.student_grade >= 85 THEN 'Satisfactory'
-                WHEN g.student_grade >= 80 THEN 'Fair'
-                WHEN g.student_grade >= 75 THEN 'Needs Improvement'
-                ELSE 'Poor'
-            END as proficiency_level
+            COUNT(g.id) as total_students,
+            COALESCE(AVG(g.student_grade), 0) as avg_performance,
+            SUM(CASE WHEN g.student_grade >= 98 THEN 1 ELSE 0 END) as excellent_count,
+            SUM(CASE WHEN g.student_grade >= 95 AND g.student_grade < 98 THEN 1 ELSE 0 END) as very_good_count,
+            SUM(CASE WHEN g.student_grade >= 90 AND g.student_grade < 95 THEN 1 ELSE 0 END) as good_count,
+            SUM(CASE WHEN g.student_grade >= 85 AND g.student_grade < 90 THEN 1 ELSE 0 END) as satisfactory_count,
+            SUM(CASE WHEN g.student_grade >= 80 AND g.student_grade < 85 THEN 1 ELSE 0 END) as fair_count,
+            SUM(CASE WHEN g.student_grade >= 75 AND g.student_grade < 80 THEN 1 ELSE 0 END) as needs_improvement_count,
+            SUM(CASE WHEN g.student_grade < 75 THEN 1 ELSE 0 END) as poor_count,
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade >= 98 THEN 1 ELSE 0 END) as excellent_male,
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade >= 98 THEN 1 ELSE 0 END) as excellent_female,
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade >= 95 AND g.student_grade < 98 THEN 1 ELSE 0 END) as very_good_male,
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade >= 95 AND g.student_grade < 98 THEN 1 ELSE 0 END) as very_good_female,
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade >= 90 AND g.student_grade < 95 THEN 1 ELSE 0 END) as good_male,
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade >= 90 AND g.student_grade < 95 THEN 1 ELSE 0 END) as good_female,
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade >= 85 AND g.student_grade < 90 THEN 1 ELSE 0 END) as satisfactory_male,
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade >= 85 AND g.student_grade < 90 THEN 1 ELSE 0 END) as satisfactory_female,
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade >= 80 AND g.student_grade < 85 THEN 1 ELSE 0 END) as fair_male,
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade >= 80 AND g.student_grade < 85 THEN 1 ELSE 0 END) as fair_female,
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade >= 75 AND g.student_grade < 80 THEN 1 ELSE 0 END) as needs_improvement_male,
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade >= 75 AND g.student_grade < 80 THEN 1 ELSE 0 END) as needs_improvement_female,
+            SUM(CASE WHEN g.gender = 'Male' AND g.student_grade < 75 THEN 1 ELSE 0 END) as poor_male,
+            SUM(CASE WHEN g.gender = 'Female' AND g.student_grade < 75 THEN 1 ELSE 0 END) as poor_female,
+            SUM(CASE WHEN g.gender = 'Male' THEN 1 ELSE 0 END) as total_male,
+            SUM(CASE WHEN g.gender = 'Female' THEN 1 ELSE 0 END) as total_female
         FROM users u
-        JOIN sections s ON u.id = s.created_by
-        JOIN grades g ON s.id = g.section_id
-        WHERE u.role = 'teacher'
+        LEFT JOIN sections s ON u.id = s.created_by
+        LEFT JOIN grades g ON s.id = g.section_id
+        WHERE g.id IS NOT NULL AND u.role = 'teacher'
+        GROUP BY u.id 
+        ORDER BY u.fullname
     ";
     
-    $params = [];
-    $types = "";
+    $result = $conn->query($query);
     
-    // Add filters based on export type
-    if ($exportType === 'subject' && $subjectFilter) {
-        $query .= " AND u.subject_taught = ?";
-        $params[] = $subjectFilter;
-        $types .= "s";
-    }
+    // Output CSV headers
+    echo "Teacher Name,Subject,Grade Level,Total Students,Average Performance,Gender Split (M/F),";
+    echo "Excellent (98-100),Excellent Male,Excellent Female,";
+    echo "Very Good (95-97),Very Good Male,Very Good Female,";
+    echo "Good (90-94),Good Male,Good Female,";
+    echo "Satisfactory (85-89),Satisfactory Male,Satisfactory Female,";
+    echo "Fair (80-84),Fair Male,Fair Female,";
+    echo "Needs Improvement (75-79),Needs Improvement Male,Needs Improvement Female,";
+    echo "Poor (Below 75),Poor Male,Poor Female\n";
     
-    if ($exportType === 'grade' && $gradeLevelFilter) {
-        $query .= " AND u.grade_level = ?";
-        $params[] = $gradeLevelFilter;
-        $types .= "s";
-    }
-    
-    if ($exportType === 'subject_grade' && $subjectFilter && $gradeLevelFilter) {
-        $query .= " AND u.subject_taught = ? AND u.grade_level = ?";
-        $params[] = $subjectFilter;
-        $params[] = $gradeLevelFilter;
-        $types .= "ss";
-    }
-    
-    $query .= " ORDER BY u.subject_taught, u.grade_level, s.section_name, g.quarter, g.created_at";
-    
-    $stmt = $conn->prepare($query);
-    
-    if (!empty($params)) {
-        $stmt->bind_param($types, ...$params);
-    }
-    
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $data = [];
-    while ($row = $result->fetch_assoc()) {
-        $data[] = $row;
-    }
-    
-    $stmt->close();
-    
-    // Generate filename
-    $filename = 'proficiency_data_' . date('Y-m-d_H-i-s');
-    if ($exportType === 'subject' && $subjectFilter) {
-        $filename = 'proficiency_' . str_replace(' ', '_', $subjectFilter) . '_' . date('Y-m-d_H-i-s');
-    } elseif ($exportType === 'grade' && $gradeLevelFilter) {
-        $filename = 'proficiency_' . str_replace(' ', '_', $gradeLevelFilter) . '_' . date('Y-m-d_H-i-s');
-    }
-    
-    if ($format === 'csv') {
-        // Set headers for CSV download
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="' . $filename . '.csv"');
-        
-        // Output CSV
-        $output = fopen('php://output', 'w');
-        
-        // Add CSV headers
-        if (!empty($data)) {
-            fputcsv($output, array_keys($data[0]));
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            // Escape quotes in strings
+            $name = '"' . str_replace('"', '""', $row['fullname']) . '"';
+            $subject = '"' . str_replace('"', '""', $row['subject_taught']) . '"';
+            $grade = '"' . str_replace('"', '""', $row['grade_level']) . '"';
             
-            // Add data rows
-            foreach ($data as $row) {
-                fputcsv($output, $row);
-            }
+            echo $name . ',' . $subject . ',' . $grade . ',';
+            echo $row['total_students'] . ',';
+            echo number_format($row['avg_performance'], 2) . '%,';
+            echo $row['total_male'] . '/' . $row['total_female'] . ',';
+            echo $row['excellent_count'] . ',' . $row['excellent_male'] . ',' . $row['excellent_female'] . ',';
+            echo $row['very_good_count'] . ',' . $row['very_good_male'] . ',' . $row['very_good_female'] . ',';
+            echo $row['good_count'] . ',' . $row['good_male'] . ',' . $row['good_female'] . ',';
+            echo $row['satisfactory_count'] . ',' . $row['satisfactory_male'] . ',' . $row['satisfactory_female'] . ',';
+            echo $row['fair_count'] . ',' . $row['fair_male'] . ',' . $row['fair_female'] . ',';
+            echo $row['needs_improvement_count'] . ',' . $row['needs_improvement_male'] . ',' . $row['needs_improvement_female'] . ',';
+            echo $row['poor_count'] . ',' . $row['poor_male'] . ',' . $row['poor_female'] . "\n";
         }
-        
-        fclose($output);
-        
     } else {
-        // JSON format
-        header('Content-Type: application/json');
-        header('Content-Disposition: attachment; filename="' . $filename . '.json"');
-        
-        echo json_encode([
-            "export_info" => [
-                "generated_at" => date('Y-m-d H:i:s'),
-                "export_type" => $exportType,
-                "filters" => [
-                    "subject" => $subjectFilter,
-                    "grade_level" => $gradeLevelFilter
-                ],
-                "total_records" => count($data)
-            ],
-            "data" => $data
-        ], JSON_PRETTY_PRINT);
+        echo "No teacher analytics data found\n";
     }
     
+    $conn->close();
+
 } catch (Exception $e) {
-    header('Content-Type: application/json');
-    echo json_encode([
-        "success" => false,
-        "message" => "Error exporting data: " . $e->getMessage()
-    ]);
+    echo "Error,Export failed: " . $e->getMessage() . "\n";
 }
 ?>

@@ -259,18 +259,80 @@ function displaySubjectProficiencyOverview(subjectData) {
           <div class="quarter-card">
             <div class="quarter-title">Quarter ${quarterData.quarter}</div>
             <div class="quarter-avg">${quarterData.avg_grade}%</div>
-            <div class="proficiency-breakdown">
-              <div class="prof-item excellent">
-                <span class="prof-count">${quarterData.excellent_count}</span>
-                <span class="prof-label">Excellent</span>
+            <div class="quarter-stats">
+              <span class="stat-badge">👦 ${quarterData.total_male_count}</span>
+              <span class="stat-badge">👧 ${quarterData.total_female_count}</span>
+            </div>
+            <div class="proficiency-levels-detailed">
+              <div class="prof-level excellent">
+                <div class="prof-level-header">
+                  <span class="prof-label">Excellent (98-100)</span>
+                  <span class="prof-count">${quarterData.excellent_count}</span>
+                </div>
+                <div class="gender-breakdown">
+                  <span class="gender-count">👦 ${quarterData.excellent_male_count}</span>
+                  <span class="gender-count">👧 ${quarterData.excellent_female_count}</span>
+                </div>
               </div>
-              <div class="prof-item good">
-                <span class="prof-count">${quarterData.very_good_count + quarterData.good_count}</span>
-                <span class="prof-label">Good+</span>
+              <div class="prof-level very-good">
+                <div class="prof-level-header">
+                  <span class="prof-label">Very Good (95-97)</span>
+                  <span class="prof-count">${quarterData.very_good_count}</span>
+                </div>
+                <div class="gender-breakdown">
+                  <span class="gender-count">👦 ${quarterData.very_good_male_count}</span>
+                  <span class="gender-count">👧 ${quarterData.very_good_female_count}</span>
+                </div>
               </div>
-              <div class="prof-item needs-help">
-                <span class="prof-count">${quarterData.needs_improvement_count + quarterData.poor_count}</span>
-                <span class="prof-label">Needs Help</span>
+              <div class="prof-level good">
+                <div class="prof-level-header">
+                  <span class="prof-label">Good (90-94)</span>
+                  <span class="prof-count">${quarterData.good_count}</span>
+                </div>
+                <div class="gender-breakdown">
+                  <span class="gender-count">👦 ${quarterData.good_male_count}</span>
+                  <span class="gender-count">👧 ${quarterData.good_female_count}</span>
+                </div>
+              </div>
+              <div class="prof-level satisfactory">
+                <div class="prof-level-header">
+                  <span class="prof-label">Satisfactory (85-89)</span>
+                  <span class="prof-count">${quarterData.satisfactory_count}</span>
+                </div>
+                <div class="gender-breakdown">
+                  <span class="gender-count">👦 ${quarterData.satisfactory_male_count}</span>
+                  <span class="gender-count">👧 ${quarterData.satisfactory_female_count}</span>
+                </div>
+              </div>
+              <div class="prof-level fair">
+                <div class="prof-level-header">
+                  <span class="prof-label">Fair (80-84)</span>
+                  <span class="prof-count">${quarterData.fair_count}</span>
+                </div>
+                <div class="gender-breakdown">
+                  <span class="gender-count">👦 ${quarterData.fair_male_count}</span>
+                  <span class="gender-count">👧 ${quarterData.fair_female_count}</span>
+                </div>
+              </div>
+              <div class="prof-level needs-improvement">
+                <div class="prof-level-header">
+                  <span class="prof-label">Needs Improvement (75-79)</span>
+                  <span class="prof-count">${quarterData.needs_improvement_count}</span>
+                </div>
+                <div class="gender-breakdown">
+                  <span class="gender-count">👦 ${quarterData.needs_improvement_male_count}</span>
+                  <span class="gender-count">👧 ${quarterData.needs_improvement_female_count}</span>
+                </div>
+              </div>
+              <div class="prof-level poor">
+                <div class="prof-level-header">
+                  <span class="prof-label">Poor (Below 75)</span>
+                  <span class="prof-count">${quarterData.poor_count}</span>
+                </div>
+                <div class="gender-breakdown">
+                  <span class="gender-count">👦 ${quarterData.poor_male_count}</span>
+                  <span class="gender-count">👧 ${quarterData.poor_female_count}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -392,14 +454,15 @@ function displayTeacherAnalytics(data) {
             <th>Subject</th>
             <th>Grade Level</th>
             <th>Total Students</th>
+            <th>Gender Split</th>
             <th>Avg Performance</th>
-            <th>Excellent</th>
-            <th>Very Good</th>
-            <th>Good</th>
-            <th>Satisfactory</th>
-            <th>Fair</th>
-            <th>Needs Improvement</th>
-            <th>Poor</th>
+            <th>Excellent (98-100)</th>
+            <th>Very Good (95-97)</th>
+            <th>Good (90-94)</th>
+            <th>Satisfactory (85-89)</th>
+            <th>Fair (80-84)</th>
+            <th>Needs Improvement (75-79)</th>
+            <th>Poor (Below 75)</th>
           </tr>
         </thead>
         <tbody>
@@ -415,34 +478,75 @@ function displayTeacherAnalytics(data) {
         <td><span class="subject-badge">${teacher.subject_taught}</span></td>
         <td><span class="grade-badge">${teacher.grade_level}</span></td>
         <td class="center">${totalStudents}</td>
+        <td class="center">
+          <div class="gender-split">
+            <span class="gender-count">👦 ${teacher.total_male_count}</span>
+            <span class="gender-count">👧 ${teacher.total_female_count}</span>
+          </div>
+        </td>
         <td class="center"><strong>${teacher.avg_performance}%</strong></td>
         <td class="center proficiency-cell excellent">
-          ${teacher.excellent_count}
-          <span class="percentage">(${totalStudents > 0 ? ((teacher.excellent_count / totalStudents) * 100).toFixed(1) : 0}%)</span>
+          <div class="proficiency-details">
+            <div class="total-count">${teacher.excellent_count}</div>
+            <div class="gender-breakdown-small">
+              <span class="gender-count">👦 ${teacher.excellent_male_count}</span>
+              <span class="gender-count">👧 ${teacher.excellent_female_count}</span>
+            </div>
+          </div>
         </td>
         <td class="center proficiency-cell very-good">
-          ${teacher.very_good_count}
-          <span class="percentage">(${totalStudents > 0 ? ((teacher.very_good_count / totalStudents) * 100).toFixed(1) : 0}%)</span>
+          <div class="proficiency-details">
+            <div class="total-count">${teacher.very_good_count}</div>
+            <div class="gender-breakdown-small">
+              <span class="gender-count">👦 ${teacher.very_good_male_count}</span>
+              <span class="gender-count">👧 ${teacher.very_good_female_count}</span>
+            </div>
+          </div>
         </td>
         <td class="center proficiency-cell good">
-          ${teacher.good_count}
-          <span class="percentage">(${totalStudents > 0 ? ((teacher.good_count / totalStudents) * 100).toFixed(1) : 0}%)</span>
+          <div class="proficiency-details">
+            <div class="total-count">${teacher.good_count}</div>
+            <div class="gender-breakdown-small">
+              <span class="gender-count">👦 ${teacher.good_male_count}</span>
+              <span class="gender-count">👧 ${teacher.good_female_count}</span>
+            </div>
+          </div>
         </td>
         <td class="center proficiency-cell satisfactory">
-          ${teacher.satisfactory_count}
-          <span class="percentage">(${totalStudents > 0 ? ((teacher.satisfactory_count / totalStudents) * 100).toFixed(1) : 0}%)</span>
+          <div class="proficiency-details">
+            <div class="total-count">${teacher.satisfactory_count}</div>
+            <div class="gender-breakdown-small">
+              <span class="gender-count">👦 ${teacher.satisfactory_male_count}</span>
+              <span class="gender-count">👧 ${teacher.satisfactory_female_count}</span>
+            </div>
+          </div>
         </td>
         <td class="center proficiency-cell fair">
-          ${teacher.fair_count}
-          <span class="percentage">(${totalStudents > 0 ? ((teacher.fair_count / totalStudents) * 100).toFixed(1) : 0}%)</span>
+          <div class="proficiency-details">
+            <div class="total-count">${teacher.fair_count}</div>
+            <div class="gender-breakdown-small">
+              <span class="gender-count">👦 ${teacher.fair_male_count}</span>
+              <span class="gender-count">👧 ${teacher.fair_female_count}</span>
+            </div>
+          </div>
         </td>
         <td class="center proficiency-cell needs-improvement">
-          ${teacher.needs_improvement_count}
-          <span class="percentage">(${totalStudents > 0 ? ((teacher.needs_improvement_count / totalStudents) * 100).toFixed(1) : 0}%)</span>
+          <div class="proficiency-details">
+            <div class="total-count">${teacher.needs_improvement_count}</div>
+            <div class="gender-breakdown-small">
+              <span class="gender-count">👦 ${teacher.needs_improvement_male_count}</span>
+              <span class="gender-count">👧 ${teacher.needs_improvement_female_count}</span>
+            </div>
+          </div>
         </td>
         <td class="center proficiency-cell poor">
-          ${teacher.poor_count}
-          <span class="percentage">(${totalStudents > 0 ? ((teacher.poor_count / totalStudents) * 100).toFixed(1) : 0}%)</span>
+          <div class="proficiency-details">
+            <div class="total-count">${teacher.poor_count}</div>
+            <div class="gender-breakdown-small">
+              <span class="gender-count">👦 ${teacher.poor_male_count}</span>
+              <span class="gender-count">👧 ${teacher.poor_female_count}</span>
+            </div>
+          </div>
         </td>
       </tr>
     `;
@@ -532,41 +636,16 @@ function hideExportModal() {
 }
 
 function exportData() {
-  const exportType = document.getElementById('exportType').value;
-  const exportSubject = document.getElementById('exportSubject').value;
-  const exportGrade = document.getElementById('exportGrade').value;
-  const exportFormat = document.getElementById('exportFormat').value;
-  
-  // Build export URL
-  const params = new URLSearchParams();
-  params.append('type', exportType);
-  params.append('format', exportFormat);
-  
-  if (exportType === 'subject' && exportSubject) {
-    params.append('subject', exportSubject);
-  } else if (exportType === 'grade' && exportGrade) {
-    params.append('grade_level', exportGrade);
-  } else if (exportType === 'subject_grade' && exportSubject && exportGrade) {
-    params.append('subject', exportSubject);
-    params.append('grade_level', exportGrade);
-  }
-  
-  // Create download link
-  const url = `backend/admin_export_data.php?${params.toString()}`;
-  
-  // Create temporary link and trigger download
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = '';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  // Direct navigation to CSV export
+  window.location.href = 'backend/admin_export_data.php';
   
   // Hide modal
   hideExportModal();
   
   // Show success message
-  alert('Export started! Your file will download shortly.');
+  setTimeout(() => {
+    alert('CSV export started! Your file should download automatically.');
+  }, 500);
 }
 
 // Update export form based on export type
