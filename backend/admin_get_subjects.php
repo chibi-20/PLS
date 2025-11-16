@@ -14,7 +14,7 @@ try {
     
     echo json_encode([
         "success" => true,
-        "data" => $subjects
+        "subjects" => $subjects
     ]);
     
 } catch (Exception $e) {

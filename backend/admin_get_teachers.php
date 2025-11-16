@@ -3,19 +3,60 @@ session_start();
 header('Content-Type: application/json');
 require_once 'db.php';
 
-// Check for admin access (for production, uncomment this)
-// if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-//     echo json_encode(["success" => false, "message" => "Admin access required"]);
-//     exit;
-// }
+// Check for admin access
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    echo json_encode(["success" => false, "message" => "Admin access required"]);
+    exit;
+}
 
 try {
-    // Get filter parameters
+    // Check if requesting simple list for account management
+    $simple = isset($_GET['simple']) && $_GET['simple'] === 'true';
+    
+    if ($simple) {
+        // Simple list for account management
+        $query = "
+            SELECT 
+                id,
+                fullname,
+                username,
+                subject_taught,
+                grade_level
+            FROM users
+            WHERE role = 'teacher'
+            ORDER BY fullname ASC
+        ";
+        
+        $result = $conn->query($query);
+        
+        $teachers = [];
+        while ($row = $result->fetch_assoc()) {
+            $teachers[] = [
+                'id' => intval($row['id']),
+                'fullname' => $row['fullname'],
+                'username' => $row['username'],
+                'subject_taught' => $row['subject_taught'],
+                'grade_level' => $row['grade_level'],
+                'created_at' => null // No timestamp in this table
+            ];
+        }
+        
+        echo json_encode([
+            "success" => true,
+            "teachers" => $teachers,
+            "total_count" => count($teachers)
+        ]);
+        
+        $conn->close();
+        exit;
+    }
+    
+    // Get filter parameters for analytics
     $subjectFilter = trim($_GET['subject'] ?? '');
     $gradeLevelFilter = trim($_GET['grade_level'] ?? '');
     $quarterFilter = intval($_GET['quarter'] ?? 0);
     
-    // Build the base query - exclude admin users
+    // Build the base query for analytics - exclude admin users
     $query = "
         SELECT 
             u.id as user_id,
