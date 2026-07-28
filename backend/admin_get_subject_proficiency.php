@@ -14,14 +14,14 @@ try {
     $schoolYearFilter = trim($_GET['school_year'] ?? '');
     $subjectFilter = trim($_GET['subject'] ?? '');
     $gradeLevelFilter = trim($_GET['grade_level'] ?? '');
-    $quarterFilter = intval($_GET['quarter'] ?? 0);
+    $termFilter = intval($_GET['term'] ?? 0);
     
     // Build the query to get subject proficiency data
     $query = "
         SELECT 
             u.subject_taught,
             u.grade_level,
-            g.quarter,
+            g.term,
             COUNT(g.id) as total_students,
             COALESCE(AVG(g.student_grade), 0) as avg_grade,
             SUM(CASE WHEN g.student_grade >= 98 THEN 1 ELSE 0 END) as excellent_count,
@@ -78,13 +78,13 @@ try {
         $types .= "s";
     }
     
-    if ($quarterFilter > 0) {
-        $query .= " AND g.quarter = ?";
-        $params[] = $quarterFilter;
+    if ($termFilter > 0) {
+        $query .= " AND g.term = ?";
+        $params[] = $termFilter;
         $types .= "i";
     }
-    
-    $query .= " GROUP BY u.subject_taught, u.grade_level, g.quarter ORDER BY u.subject_taught, u.grade_level, g.quarter";
+
+    $query .= " GROUP BY u.subject_taught, u.grade_level, g.term ORDER BY u.subject_taught, u.grade_level, g.term";
     
     $stmt = $conn->prepare($query);
     
@@ -97,11 +97,11 @@ try {
     
     $subjects = [];
     while ($row = $result->fetch_assoc()) {
-        $key = $row['subject_taught'] . '_' . $row['grade_level'] . '_Q' . $row['quarter'];
+        $key = $row['subject_taught'] . '_' . $row['grade_level'] . '_T' . $row['term'];
         $subjects[$key] = [
             'subject' => $row['subject_taught'],
             'grade_level' => $row['grade_level'],
-            'quarter' => $row['quarter'],
+            'term' => $row['term'],
             'total_students' => intval($row['total_students']),
             'avg_grade' => round(floatval($row['avg_grade']), 1),
             'excellent_count' => intval($row['excellent_count']),

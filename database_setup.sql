@@ -26,10 +26,11 @@ CREATE TABLE sections (
 );
 
 -- Create grades table
+-- term: 1-3 = Term 1/2/3, 4 = Final Grade (entered directly by the teacher, not computed)
 CREATE TABLE grades (
     id INT PRIMARY KEY AUTO_INCREMENT,
     section_id INT NOT NULL,
-    quarter INT NOT NULL CHECK (quarter BETWEEN 1 AND 4),
+    term INT NOT NULL CHECK (term BETWEEN 1 AND 4),
     student_grade DECIMAL(5,2) NOT NULL CHECK (student_grade BETWEEN 0 AND 100),
     gender ENUM('Male', 'Female') NOT NULL,
     created_by INT NOT NULL,

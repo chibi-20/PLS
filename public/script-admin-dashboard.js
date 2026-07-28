@@ -137,27 +137,27 @@ function setupEventListeners() {
   document.getElementById('filterSchoolYear').addEventListener('change', loadSubjectOverview);
   document.getElementById('filterSubject').addEventListener('change', loadSubjectOverview);
   document.getElementById('filterGradeLevel').addEventListener('change', loadSubjectOverview);
-  document.getElementById('filterQuarter').addEventListener('change', loadSubjectOverview);
-  
+  document.getElementById('filterTerm').addEventListener('change', loadSubjectOverview);
+
   document.getElementById('analyticsSchoolYear').addEventListener('change', loadTeacherAnalytics);
   document.getElementById('analyticsSubject').addEventListener('change', loadTeacherAnalytics);
   document.getElementById('analyticsGrade').addEventListener('change', loadTeacherAnalytics);
-  document.getElementById('analyticsQuarter').addEventListener('change', loadTeacherAnalytics);
+  document.getElementById('analyticsTerm').addEventListener('change', loadTeacherAnalytics);
 }
 
 async function loadSubjectOverview() {
   const schoolYearFilter = document.getElementById('filterSchoolYear').value;
   const subjectFilter = document.getElementById('filterSubject').value;
   const gradeFilter = document.getElementById('filterGradeLevel').value;
-  const quarterFilter = document.getElementById('filterQuarter').value;
-  
+  const termFilter = document.getElementById('filterTerm').value;
+
   try {
     // Build query parameters
     const params = new URLSearchParams();
     if (schoolYearFilter) params.append('school_year', schoolYearFilter);
     if (subjectFilter) params.append('subject', subjectFilter);
     if (gradeFilter) params.append('grade_level', gradeFilter);
-    if (quarterFilter) params.append('quarter', quarterFilter);
+    if (termFilter) params.append('term', termFilter);
     
     const response = await fetch(`backend/admin_get_subject_proficiency.php?${params.toString()}`);
     const result = await response.json();
@@ -181,24 +181,31 @@ function displaySubjectProficiencyOverview(subjectData) {
   const summaryContainer = document.getElementById('subjectSummary');
   const teachersContainer = document.getElementById('teachersGrid');
   
-  // Group data by subject
+  // Group data by subject. Term 4 (Final Grade) is entered directly by the teacher and
+  // is tracked separately - it's excluded from the Term 1-3 "Average Performance" summary
+  // since it's already a summary value, not another termly score to blend in.
   const subjectGroups = {};
   Object.values(subjectData).forEach(data => {
     const key = data.subject;
     if (!subjectGroups[key]) {
       subjectGroups[key] = {
         subject: data.subject,
-        quarters: {},
+        terms: {},
+        finalGrade: null,
         totalStudents: 0,
         totalGrades: 0,
         avgGrade: 0
       };
     }
-    
-    const quarterKey = `Q${data.quarter}`;
-    subjectGroups[key].quarters[quarterKey] = data;
-    subjectGroups[key].totalStudents += data.total_students;
-    subjectGroups[key].totalGrades += (data.avg_grade * data.total_students);
+
+    if (String(data.term) === '4') {
+      subjectGroups[key].finalGrade = data;
+    } else {
+      const termKey = `T${data.term}`;
+      subjectGroups[key].terms[termKey] = data;
+      subjectGroups[key].totalStudents += data.total_students;
+      subjectGroups[key].totalGrades += (data.avg_grade * data.total_students);
+    }
   });
   
   // Calculate overall averages
@@ -211,8 +218,8 @@ function displaySubjectProficiencyOverview(subjectData) {
   // Create summary cards for subjects
   let summaryHTML = '';
   Object.values(subjectGroups).forEach(group => {
-    const quarterCount = Object.keys(group.quarters).length;
-    
+    const termCount = Object.keys(group.terms).length;
+
     summaryHTML += `
       <div class="summary-card">
         <div class="summary-title">
@@ -221,7 +228,7 @@ function displaySubjectProficiencyOverview(subjectData) {
         </div>
         <div class="summary-number">${group.avgGrade}%</div>
         <div class="summary-subtitle">
-          ${group.totalStudents} students • ${quarterCount} quarters
+          ${group.totalStudents} students • ${termCount} terms
           <br>Average Performance
         </div>
       </div>
@@ -248,90 +255,90 @@ function displaySubjectProficiencyOverview(subjectData) {
           </div>
         </div>
         
-        <div class="quarters-grid">
+        <div class="terms-grid">
     `;
-    
-    // Display quarter data
-    ['Q1', 'Q2', 'Q3', 'Q4'].forEach(quarter => {
-      const quarterData = group.quarters[quarter];
-      if (quarterData) {
+
+    // Display term data
+    ['T1', 'T2', 'T3'].forEach(term => {
+      const termData = group.terms[term];
+      if (termData) {
         cardsHTML += `
-          <div class="quarter-card">
-            <div class="quarter-title">Quarter ${quarterData.quarter}</div>
-            <div class="quarter-avg">${quarterData.avg_grade}%</div>
-            <div class="quarter-stats">
-              <span class="stat-badge">👦 ${quarterData.total_male_count}</span>
-              <span class="stat-badge">👧 ${quarterData.total_female_count}</span>
+          <div class="term-card">
+            <div class="term-title">Term ${termData.term}</div>
+            <div class="term-avg">${termData.avg_grade}%</div>
+            <div class="term-stats">
+              <span class="stat-badge">👦 ${termData.total_male_count}</span>
+              <span class="stat-badge">👧 ${termData.total_female_count}</span>
             </div>
             <div class="proficiency-levels-detailed">
               <div class="prof-level excellent">
                 <div class="prof-level-header">
                   <span class="prof-label">Excellent (98-100)</span>
-                  <span class="prof-count">${quarterData.excellent_count}</span>
+                  <span class="prof-count">${termData.excellent_count}</span>
                 </div>
                 <div class="gender-breakdown">
-                  <span class="gender-count">👦 ${quarterData.excellent_male_count}</span>
-                  <span class="gender-count">👧 ${quarterData.excellent_female_count}</span>
+                  <span class="gender-count">👦 ${termData.excellent_male_count}</span>
+                  <span class="gender-count">👧 ${termData.excellent_female_count}</span>
                 </div>
               </div>
               <div class="prof-level very-good">
                 <div class="prof-level-header">
                   <span class="prof-label">Very Good (95-97)</span>
-                  <span class="prof-count">${quarterData.very_good_count}</span>
+                  <span class="prof-count">${termData.very_good_count}</span>
                 </div>
                 <div class="gender-breakdown">
-                  <span class="gender-count">👦 ${quarterData.very_good_male_count}</span>
-                  <span class="gender-count">👧 ${quarterData.very_good_female_count}</span>
+                  <span class="gender-count">👦 ${termData.very_good_male_count}</span>
+                  <span class="gender-count">👧 ${termData.very_good_female_count}</span>
                 </div>
               </div>
               <div class="prof-level good">
                 <div class="prof-level-header">
                   <span class="prof-label">Good (90-94)</span>
-                  <span class="prof-count">${quarterData.good_count}</span>
+                  <span class="prof-count">${termData.good_count}</span>
                 </div>
                 <div class="gender-breakdown">
-                  <span class="gender-count">👦 ${quarterData.good_male_count}</span>
-                  <span class="gender-count">👧 ${quarterData.good_female_count}</span>
+                  <span class="gender-count">👦 ${termData.good_male_count}</span>
+                  <span class="gender-count">👧 ${termData.good_female_count}</span>
                 </div>
               </div>
               <div class="prof-level satisfactory">
                 <div class="prof-level-header">
                   <span class="prof-label">Satisfactory (85-89)</span>
-                  <span class="prof-count">${quarterData.satisfactory_count}</span>
+                  <span class="prof-count">${termData.satisfactory_count}</span>
                 </div>
                 <div class="gender-breakdown">
-                  <span class="gender-count">👦 ${quarterData.satisfactory_male_count}</span>
-                  <span class="gender-count">👧 ${quarterData.satisfactory_female_count}</span>
+                  <span class="gender-count">👦 ${termData.satisfactory_male_count}</span>
+                  <span class="gender-count">👧 ${termData.satisfactory_female_count}</span>
                 </div>
               </div>
               <div class="prof-level fair">
                 <div class="prof-level-header">
                   <span class="prof-label">Fair (80-84)</span>
-                  <span class="prof-count">${quarterData.fair_count}</span>
+                  <span class="prof-count">${termData.fair_count}</span>
                 </div>
                 <div class="gender-breakdown">
-                  <span class="gender-count">👦 ${quarterData.fair_male_count}</span>
-                  <span class="gender-count">👧 ${quarterData.fair_female_count}</span>
+                  <span class="gender-count">👦 ${termData.fair_male_count}</span>
+                  <span class="gender-count">👧 ${termData.fair_female_count}</span>
                 </div>
               </div>
               <div class="prof-level needs-improvement">
                 <div class="prof-level-header">
                   <span class="prof-label">Needs Improvement (75-79)</span>
-                  <span class="prof-count">${quarterData.needs_improvement_count}</span>
+                  <span class="prof-count">${termData.needs_improvement_count}</span>
                 </div>
                 <div class="gender-breakdown">
-                  <span class="gender-count">👦 ${quarterData.needs_improvement_male_count}</span>
-                  <span class="gender-count">👧 ${quarterData.needs_improvement_female_count}</span>
+                  <span class="gender-count">👦 ${termData.needs_improvement_male_count}</span>
+                  <span class="gender-count">👧 ${termData.needs_improvement_female_count}</span>
                 </div>
               </div>
               <div class="prof-level poor">
                 <div class="prof-level-header">
                   <span class="prof-label">Poor (Below 75)</span>
-                  <span class="prof-count">${quarterData.poor_count}</span>
+                  <span class="prof-count">${termData.poor_count}</span>
                 </div>
                 <div class="gender-breakdown">
-                  <span class="gender-count">👦 ${quarterData.poor_male_count}</span>
-                  <span class="gender-count">👧 ${quarterData.poor_female_count}</span>
+                  <span class="gender-count">👦 ${termData.poor_male_count}</span>
+                  <span class="gender-count">👧 ${termData.poor_female_count}</span>
                 </div>
               </div>
             </div>
@@ -339,14 +346,35 @@ function displaySubjectProficiencyOverview(subjectData) {
         `;
       } else {
         cardsHTML += `
-          <div class="quarter-card empty">
-            <div class="quarter-title">Quarter ${quarter.slice(1)}</div>
+          <div class="term-card empty">
+            <div class="term-title">Term ${term.slice(1)}</div>
             <div class="no-data">No Data</div>
           </div>
         `;
       }
     });
-    
+
+    // Final Grade: entered directly by the teacher (term = 4), not computed here
+    if (group.finalGrade) {
+      cardsHTML += `
+        <div class="term-card final-grade-card">
+          <div class="term-title">Final Grade</div>
+          <div class="term-avg">${group.finalGrade.avg_grade}%</div>
+          <div class="term-stats">
+            <span class="stat-badge">👦 ${group.finalGrade.total_male_count}</span>
+            <span class="stat-badge">👧 ${group.finalGrade.total_female_count}</span>
+          </div>
+        </div>
+      `;
+    } else {
+      cardsHTML += `
+        <div class="term-card empty final-grade-card">
+          <div class="term-title">Final Grade</div>
+          <div class="no-data">No Data</div>
+        </div>
+      `;
+    }
+
     cardsHTML += `
         </div>
       </div>
@@ -411,14 +439,14 @@ async function loadTeacherAnalytics() {
   const schoolYearFilter = document.getElementById('analyticsSchoolYear').value;
   const subjectFilter = document.getElementById('analyticsSubject').value;
   const gradeFilter = document.getElementById('analyticsGrade').value;
-  const quarterFilter = document.getElementById('analyticsQuarter').value;
-  
+  const termFilter = document.getElementById('analyticsTerm').value;
+
   try {
     const params = new URLSearchParams();
     if (schoolYearFilter) params.append('school_year', schoolYearFilter);
     if (subjectFilter) params.append('subject', subjectFilter);
     if (gradeFilter) params.append('grade_level', gradeFilter);
-    if (quarterFilter) params.append('quarter', quarterFilter);
+    if (termFilter) params.append('term', termFilter);
     
     const response = await fetch(`backend/admin_get_analytics.php?${params.toString()}`);
     const result = await response.json();
@@ -591,9 +619,9 @@ async function populateSubjectFilters() {
     const response = await fetch('backend/admin_get_subjects.php');
     const result = await response.json();
     
-    if (result.success && result.data) {
-      const subjects = result.data;
-      
+    if (result.success && result.subjects) {
+      const subjects = result.subjects;
+
       const subjectFilter = document.getElementById('filterSubject');
       const analyticsSubject = document.getElementById('analyticsSubject');
       const exportSubject = document.getElementById('exportSubject');

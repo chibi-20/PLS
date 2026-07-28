@@ -406,13 +406,13 @@
       font-weight: 600;
     }
 
-    .quarters-grid {
+    .terms-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 15px;
     }
 
-    .quarter-card {
+    .term-card {
       background: #f8fafc;
       border-radius: 8px;
       padding: 15px;
@@ -420,23 +420,32 @@
       border: 1px solid #e2e8f0;
     }
 
-    .quarter-card.empty {
+    .term-card.empty {
       opacity: 0.5;
       background: #f1f5f9;
     }
 
-    .quarter-title {
+    .term-title {
       font-weight: 600;
       color: #4a5568;
       margin-bottom: 8px;
       font-size: 0.9em;
     }
 
-    .quarter-avg {
+    .term-avg {
       font-size: 1.5em;
       font-weight: 700;
       color: #7c3aed;
       margin-bottom: 10px;
+    }
+
+    .final-grade-card {
+      background: #fff8e1;
+      border: 2px solid #ffc107;
+    }
+
+    .final-grade-card .term-title {
+      color: #b8860b;
     }
 
     .proficiency-breakdown {
@@ -561,14 +570,14 @@
       font-weight: 500;
     }
 
-    .quarter-stats {
+    .term-stats {
       display: flex;
       gap: 8px;
       justify-content: center;
       margin-top: 5px;
     }
 
-    .quarter-stats .stat-badge {
+    .term-stats .stat-badge {
       font-size: 0.75em;
       padding: 3px 6px;
     }
@@ -1308,13 +1317,13 @@
               </select>
             </div>
             <div class="filter-group">
-              <label for="filterQuarter">Filter by Quarter:</label>
-              <select id="filterQuarter">
-                <option value="">All Quarters</option>
-                <option value="1">Quarter 1</option>
-                <option value="2">Quarter 2</option>
-                <option value="3">Quarter 3</option>
-                <option value="4">Quarter 4</option>
+              <label for="filterTerm">Filter by Term:</label>
+              <select id="filterTerm">
+                <option value="">All Terms</option>
+                <option value="1">Term 1</option>
+                <option value="2">Term 2</option>
+                <option value="3">Term 3</option>
+                <option value="4">Final Grade</option>
               </select>
             </div>
           </div>
@@ -1361,13 +1370,13 @@
               </select>
             </div>
             <div class="filter-group">
-              <label for="analyticsQuarter">Quarter:</label>
-              <select id="analyticsQuarter">
-                <option value="">All Quarters</option>
-                <option value="1">Quarter 1</option>
-                <option value="2">Quarter 2</option>
-                <option value="3">Quarter 3</option>
-                <option value="4">Quarter 4</option>
+              <label for="analyticsTerm">Term:</label>
+              <select id="analyticsTerm">
+                <option value="">All Terms</option>
+                <option value="1">Term 1</option>
+                <option value="2">Term 2</option>
+                <option value="3">Term 3</option>
+                <option value="4">Final Grade</option>
               </select>
             </div>
           </div>
@@ -1468,13 +1477,13 @@
               </div>
               
               <div class="form-group">
-                <label for="lisQuarter">Quarter:</label>
-                <select id="lisQuarter">
-                  <option value="">Select Quarter</option>
-                  <option value="1">Quarter 1</option>
-                  <option value="2">Quarter 2</option>
-                  <option value="3">Quarter 3</option>
-                  <option value="4">Quarter 4</option>
+                <label for="lisTerm">Term:</label>
+                <select id="lisTerm">
+                  <option value="">Select Term</option>
+                  <option value="1">Term 1</option>
+                  <option value="2">Term 2</option>
+                  <option value="3">Term 3</option>
+                  <option value="4">Final Grade</option>
                 </select>
               </div>
             </div>
@@ -1484,7 +1493,7 @@
                 <label for="lisStudentCount">Official LIS Student Count:</label>
                 <input type="number" id="lisStudentCount" placeholder="Enter the official student count from LIS" min="0" max="1000">
                 <small style="color: #6b7280; font-size: 0.85em;">
-                  Enter the exact number of students for this subject, grade, and quarter as recorded in LIS
+                  Enter the exact number of students for this subject, grade, and term as recorded in LIS
                 </small>
               </div>
               
@@ -1737,50 +1746,53 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3>📊 Export System Data</h3>
-        <button class="close-btn" onclick="hideExportModal()">&times;</button>
+        <span class="close-btn" onclick="hideExportModal()">&times;</span>
       </div>
-      
-      <div class="form-group">
-        <label for="exportType">Export Type:</label>
-        <select id="exportType" onchange="updateExportForm()">
-          <option value="all">All Data</option>
-          <option value="subject">By Subject</option>
-          <option value="grade">By Grade Level</option>
-          <option value="subject_grade">By Subject & Grade Level</option>
-        </select>
-      </div>
-      
-      <div class="form-row">
-        <div class="form-group" id="exportSubjectGroup" style="display: none;">
-          <label for="exportSubject">Subject:</label>
-          <select id="exportSubject">
-            <option value="">Select Subject</option>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="exportType">Export Type:</label>
+          <select id="exportType" onchange="updateExportForm()">
+            <option value="all">All Data</option>
+            <option value="subject">By Subject</option>
+            <option value="grade">By Grade Level</option>
+            <option value="subject_grade">By Subject & Grade Level</option>
           </select>
         </div>
-        
-        <div class="form-group" id="exportGradeGroup" style="display: none;">
-          <label for="exportGrade">Grade Level:</label>
-          <select id="exportGrade">
-            <option value="">Select Grade</option>
-            <option value="Grade 7">Grade 7</option>
-            <option value="Grade 8">Grade 8</option>
-            <option value="Grade 9">Grade 9</option>
-            <option value="Grade 10">Grade 10</option>
+
+        <div class="form-row">
+          <div class="form-group" id="exportSubjectGroup" style="display: none;">
+            <label for="exportSubject">Subject:</label>
+            <select id="exportSubject">
+              <option value="">Select Subject</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="exportGradeGroup" style="display: none;">
+            <label for="exportGrade">Grade Level:</label>
+            <select id="exportGrade">
+              <option value="">Select Grade</option>
+              <option value="Grade 7">Grade 7</option>
+              <option value="Grade 8">Grade 8</option>
+              <option value="Grade 9">Grade 9</option>
+              <option value="Grade 10">Grade 10</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="exportFormat">Export Format:</label>
+          <select id="exportFormat">
+            <option value="csv">CSV (Excel Compatible)</option>
+            <option value="json">JSON (Data Format)</option>
           </select>
         </div>
       </div>
-      
-      <div class="form-group">
-        <label for="exportFormat">Export Format:</label>
-        <select id="exportFormat">
-          <option value="csv">CSV (Excel Compatible)</option>
-          <option value="json">JSON (Data Format)</option>
-        </select>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="hideExportModal()">Cancel</button>
+        <button type="button" class="btn-primary" onclick="exportData()">📥 Download Export</button>
       </div>
-      
-      <button class="export-btn" onclick="exportData()">
-        📥 Download Export
-      </button>
     </div>
   </div>
 
@@ -1822,10 +1834,10 @@
       const schoolYear = document.getElementById('lisSchoolYear').value;
       const subject = document.getElementById('lisSubject').value;
       const gradeLevel = document.getElementById('lisGradeLevel').value;
-      const quarter = document.getElementById('lisQuarter').value;
+      const term = document.getElementById('lisTerm').value;
       const lisCount = parseInt(document.getElementById('lisStudentCount').value);
       
-      if (!schoolYear || !subject || !gradeLevel || !quarter || !lisCount) {
+      if (!schoolYear || !subject || !gradeLevel || !term || !lisCount) {
         alert('Please fill in all fields before comparing.');
         return;
       }
@@ -1836,7 +1848,7 @@
         document.getElementById('compareLisData').disabled = true;
         
         // Get system student count for the specified criteria
-        const response = await fetch(`backend/admin_get_lis_comparison.php?school_year=${encodeURIComponent(schoolYear)}&subject=${encodeURIComponent(subject)}&grade_level=${encodeURIComponent(gradeLevel)}&quarter=${quarter}`);
+        const response = await fetch(`backend/admin_get_lis_comparison.php?school_year=${encodeURIComponent(schoolYear)}&subject=${encodeURIComponent(subject)}&grade_level=${encodeURIComponent(gradeLevel)}&term=${term}`);
         const data = await response.json();
         
         if (data.success) {
@@ -1882,7 +1894,7 @@
             <h4>📋 Comparison Details</h4>
             <div style="margin-bottom: 15px;">
               <strong>Query Parameters:</strong><br>
-              School Year: ${schoolYear} | Subject: ${subject} | Grade: ${gradeLevel} | Quarter: ${quarter}
+              School Year: ${schoolYear} | Subject: ${subject} | Grade: ${gradeLevel} | Term: ${term}
             </div>
             
             <div style="margin-bottom: 15px;">

@@ -54,7 +54,7 @@ try {
     // Get filter parameters for analytics
     $subjectFilter = trim($_GET['subject'] ?? '');
     $gradeLevelFilter = trim($_GET['grade_level'] ?? '');
-    $quarterFilter = intval($_GET['quarter'] ?? 0);
+    $termFilter = intval($_GET['term'] ?? 0);
     
     // Build the base query for analytics - exclude admin users
     $query = "
@@ -90,9 +90,9 @@ try {
         $types .= "s";
     }
     
-    if ($quarterFilter > 0) {
-        $query .= " AND g.quarter = ?";
-        $params[] = $quarterFilter;
+    if ($termFilter > 0) {
+        $query .= " AND g.term = ?";
+        $params[] = $termFilter;
         $types .= "i";
     }
     

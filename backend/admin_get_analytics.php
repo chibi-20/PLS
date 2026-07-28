@@ -8,7 +8,7 @@ try {
     $schoolYearFilter = trim($_GET['school_year'] ?? '');
     $subjectFilter = trim($_GET['subject'] ?? '');
     $gradeLevelFilter = trim($_GET['grade_level'] ?? '');
-    $quarterFilter = trim($_GET['quarter'] ?? '');
+    $termFilter = trim($_GET['term'] ?? '');
     
     // Build query for detailed analytics - exclude admin users
     $query = "
@@ -73,9 +73,9 @@ try {
         $types .= "s";
     }
     
-    if ($quarterFilter) {
-        $query .= " AND g.quarter = ?";
-        $params[] = $quarterFilter;
+    if ($termFilter) {
+        $query .= " AND g.term = ?";
+        $params[] = $termFilter;
         $types .= "i";
     }
     

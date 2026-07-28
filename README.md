@@ -6,13 +6,13 @@ A comprehensive web-based student grade tracking and analytics system designed f
 
 ### 👨‍🏫 Teacher Dashboard
 - **Section Management**: Create, view, and delete classroom sections
-- **Grade Input**: Input student grades by gender (boys/girls) for each quarter
+- **Grade Input**: Input student grades by gender (boys/girls) for each term, plus a Final Grade entered directly by the teacher
 - **Proficiency Analytics**: View detailed grade distributions across 7 proficiency levels
 - **Visual Charts**: Real-time charts showing grade distributions and trends
 - **User Isolation**: Each teacher only sees their own sections and data
 
 ### 🛡️ Admin Dashboard (Master Account)
-- **Subject Overview**: Analyze performance by subject and grade level across quarters
+- **Subject Overview**: Analyze performance by subject and grade level across terms, including the teacher-entered Final Grade
 - **Teacher Analytics**: Comprehensive table view of all teacher performance data
 - **System Reports**: Overall system statistics and insights
 - **Data Export**: Export filtered data in CSV or JSON formats
@@ -53,7 +53,7 @@ sections
 grades
 ├── id (Primary Key)
 ├── section_id (Foreign Key → sections.id)
-├── quarter (1-4)
+├── term (1-3, or 4 = Final Grade entered directly by the teacher)
 ├── student_grade (0-100)
 ├── gender (enum: 'Male', 'Female')
 ├── created_by (Foreign Key → users.id)
@@ -107,7 +107,7 @@ CREATE TABLE sections (
 CREATE TABLE grades (
     id INT PRIMARY KEY AUTO_INCREMENT,
     section_id INT NOT NULL,
-    quarter INT NOT NULL CHECK (quarter BETWEEN 1 AND 4),
+    term INT NOT NULL CHECK (term BETWEEN 1 AND 4), -- 4 = Final Grade
     student_grade DECIMAL(5,2) NOT NULL CHECK (student_grade BETWEEN 0 AND 100),
     gender ENUM('Male', 'Female') NOT NULL,
     created_by INT NOT NULL,
@@ -161,13 +161,13 @@ $pass = ''; // Update if you have a MySQL password
 
 #### 3. Inputting Grades
 - Go to "Input Grades" tab
-- Select section and quarter
+- Select section and term
 - Enter grades for boys and girls (comma-separated)
 - Grades must be between 0-100
 
 #### 4. Viewing Analytics
 - Visit "Proficiency Data" tab
-- Filter by section and/or quarter
+- Filter by section and/or term
 - View grade distributions across 7 proficiency levels:
   - **Excellent**: 98-100%
   - **Very Good**: 95-97%
@@ -184,8 +184,8 @@ $pass = ''; // Update if you have a MySQL password
 - Automatically redirected to admin dashboard
 
 #### 2. Subject Overview
-- View performance by subject across quarters
-- Filter by subject, grade level, or quarter
+- View performance by subject across terms, plus the Final Grade the teacher entered directly
+- Filter by subject, grade level, or term
 - See proficiency breakdowns for each subject
 
 #### 3. Teacher Analytics
@@ -306,7 +306,7 @@ The system uses consistent color coding across all interfaces:
 **Grade Input Problems**
 - Ensure grades are numeric values between 0-100
 - Check that section exists and belongs to the user
-- Verify quarter is between 1-4
+- Verify term is between 1-4 (4 = Final Grade)
 
 **Chart Display Issues**
 - Check browser console for JavaScript errors

@@ -14,13 +14,13 @@ try {
     $schoolYear = trim($_GET['school_year'] ?? '');
     $subject = trim($_GET['subject'] ?? '');
     $gradeLevel = trim($_GET['grade_level'] ?? '');
-    $quarter = intval($_GET['quarter'] ?? 0);
-    
+    $term = intval($_GET['term'] ?? 0);
+
     // Validate required parameters
-    if (empty($schoolYear) || empty($subject) || empty($gradeLevel) || $quarter < 1 || $quarter > 4) {
+    if (empty($schoolYear) || empty($subject) || empty($gradeLevel) || $term < 1 || $term > 4) {
         echo json_encode([
-            "success" => false, 
-            "message" => "School year, subject, grade level, and quarter are required"
+            "success" => false,
+            "message" => "School year, subject, grade level, and term are required"
         ]);
         exit;
     }
@@ -36,14 +36,14 @@ try {
         WHERE u.role = 'teacher'
         AND u.subject_taught = ?
         AND u.grade_level = ?
-        AND g.quarter = ?
+        AND g.term = ?
         AND g.school_year = ?
         GROUP BY s.id, s.section_name
         ORDER BY s.section_name
     ";
-    
+
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("ssis", $subject, $gradeLevel, $quarter, $schoolYear);
+    $stmt->bind_param("ssis", $subject, $gradeLevel, $term, $schoolYear);
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -70,12 +70,12 @@ try {
         WHERE u.role = 'teacher'
         AND u.subject_taught = ?
         AND u.grade_level = ?
-        AND g.quarter = ?
+        AND g.term = ?
         AND g.school_year = ?
     ";
-    
+
     $uniqueStmt = $conn->prepare($uniqueQuery);
-    $uniqueStmt->bind_param("ssis", $subject, $gradeLevel, $quarter, $schoolYear);
+    $uniqueStmt->bind_param("ssis", $subject, $gradeLevel, $term, $schoolYear);
     $uniqueStmt->execute();
     $uniqueResult = $uniqueStmt->get_result();
     $uniqueRow = $uniqueResult->fetch_assoc();
@@ -91,7 +91,7 @@ try {
             "school_year" => $schoolYear,
             "subject" => $subject,
             "grade_level" => $gradeLevel,
-            "quarter" => $quarter
+            "term" => $term
         ]
     ]);
     

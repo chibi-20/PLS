@@ -3,8 +3,13 @@ const sectionListDiv = document.getElementById("sectionList");
 const sectionSelect = document.getElementById("sectionSelect");
 const proficiencySection = document.getElementById("proficiencySection");
 const addSectionForm = document.getElementById("addSectionForm");
-const quarterSelect = document.getElementById("quarterSelect");
+const termSelect = document.getElementById("termSelect");
 const chartSectionSelect = document.createElement("select"); // We'll add this to sidebar
+
+// Term 4 represents the Final Grade, entered directly by the teacher (not computed)
+function termLabel(term) {
+  return String(term) === '4' ? 'Final Grade' : `Term ${term}`;
+}
 
 // Store sections data
 let sections = [];
@@ -186,7 +191,7 @@ document.getElementById("proficiencyForm").addEventListener("submit", async (e) 
   e.preventDefault();
   const schoolYear = document.getElementById("schoolYearInput").value;
   const section = sectionSelect.value;
-  const quarter = document.getElementById("quarterInput").value;
+  const term = document.getElementById("termInput").value;
   const boysGrades = document.getElementById("gradesBoys").value.trim();
   const girlsGrades = document.getElementById("gradesGirls").value.trim();
 
@@ -207,7 +212,7 @@ document.getElementById("proficiencyForm").addEventListener("submit", async (e) 
     const formData = new FormData();
     formData.append('school_year', schoolYear);
     formData.append('section_name', section);
-    formData.append('quarter', quarter);
+    formData.append('term', term);
     
     // Add boys grades as array
     boys.forEach(grade => {
@@ -227,7 +232,7 @@ document.getElementById("proficiencyForm").addEventListener("submit", async (e) 
     const result = await response.json();
 
     if (result.success) {
-      showMessage(`Grades saved successfully! ${result.grades_inserted} grades recorded for ${section}, Quarter ${quarter}`, 'success');
+      showMessage(`Grades saved successfully! ${result.grades_inserted} grades recorded for ${section}, ${termLabel(term)}`, 'success');
       updateCharts();
       
       // Refresh proficiency data if that tab is active
@@ -334,33 +339,33 @@ function categorizeGradesForChart(grades) {
 }
 
 function updateCharts() {
-  const quarter = quarterSelect.value;
+  const term = termSelect.value;
   const selectedSection = document.getElementById('chartSectionSelect').value;
-  
+
   if (selectedSection) {
     // Show data for specific section
-    fetchGradeData(selectedSection, quarter);
+    fetchGradeData(selectedSection, term);
   } else {
     // Show overall data (all sections)
-    fetchAllGradeData(quarter);
+    fetchAllGradeData(term);
   }
 }
 
-async function fetchGradeData(sectionName, quarter) {
+async function fetchGradeData(sectionName, term) {
   try {
-    const response = await fetch(`backend/get_data.php?section=${encodeURIComponent(sectionName)}&quarter=${quarter}`);
+    const response = await fetch(`backend/get_data.php?section=${encodeURIComponent(sectionName)}&term=${term}`);
     const result = await response.json();
-    
+
     if (result.success) {
       const boys = result.boys || [];
       const girls = result.girls || [];
-      
+
       const combinedCounts = categorizeGradesForChart([...boys, ...girls]);
       const boysCounts = categorizeGradesForChart(boys);
       const girlsCounts = categorizeGradesForChart(girls);
 
       // Update chart titles
-      const chartTitle = `${sectionName} - Quarter ${quarter}`;
+      const chartTitle = `${sectionName} - ${termLabel(term)}`;
       updateChartTitles(chartTitle, boys.length, girls.length);
 
       // Update chart data
@@ -382,17 +387,17 @@ async function fetchGradeData(sectionName, quarter) {
   }
 }
 
-async function fetchAllGradeData(quarter) {
+async function fetchAllGradeData(term) {
   try {
     const response = await fetch('backend/get_data.php');
     const result = await response.json();
-    
+
     if (result.success) {
       let boysAll = [], girlsAll = [];
-      
-      // Combine all data for the selected quarter
+
+      // Combine all data for the selected term
       Object.values(result.data).forEach(sectionData => {
-        if (sectionData.quarter == quarter) {
+        if (sectionData.term == term) {
           boysAll = boysAll.concat(sectionData.boys || []);
           girlsAll = girlsAll.concat(sectionData.girls || []);
         }
@@ -403,7 +408,7 @@ async function fetchAllGradeData(quarter) {
       const girlsCounts = categorizeGradesForChart(girlsAll);
 
       // Update chart titles
-      const chartTitle = `Overall - Quarter ${quarter}`;
+      const chartTitle = `Overall - ${termLabel(term)}`;
       updateChartTitles(chartTitle, boysAll.length, girlsAll.length);
 
       // Update chart data
@@ -449,7 +454,7 @@ function updateChartTitles(title, boysCount, girlsCount) {
 }
 
 // Event listeners
-quarterSelect.addEventListener("change", updateCharts);
+termSelect.addEventListener("change", updateCharts);
 document.addEventListener('DOMContentLoaded', function() {
   // Add event listener for chart section selector after DOM is loaded
   const chartSectionSelect = document.getElementById('chartSectionSelect');
@@ -492,17 +497,17 @@ async function fetchAndDisplayProficiencyData() {
   const overallContainer = document.getElementById('overallProficiencyContainer');
   const selectedSchoolYear = document.getElementById('proficiencySchoolYear').value;
   const selectedSection = document.getElementById('proficiencySection').value;
-  const selectedQuarter = document.getElementById('proficiencyQuarter').value;
-  
+  const selectedTerm = document.getElementById('proficiencyTerm').value;
+
   container.innerHTML = '';
   overallContainer.innerHTML = '';
-  
+
   try {
     // Build query parameters
     const params = new URLSearchParams();
     if (selectedSchoolYear) params.append('school_year', selectedSchoolYear);
     if (selectedSection) params.append('section', selectedSection);
-    if (selectedQuarter) params.append('quarter', selectedQuarter);
+    if (selectedTerm) params.append('term', selectedTerm);
     
     const url = params.toString() ? `backend/get_data.php?${params.toString()}` : 'backend/get_data.php';
     const response = await fetch(url);
@@ -524,22 +529,22 @@ async function fetchAndDisplayProficiencyData() {
     Object.keys(allData).forEach(key => {
       const data = allData[key];
       const matchesSection = !selectedSection || data.section === selectedSection;
-      const matchesQuarter = !selectedQuarter || data.quarter == selectedQuarter;
-      
-      if (matchesSection && matchesQuarter) {
+      const matchesTerm = !selectedTerm || data.term == selectedTerm;
+
+      if (matchesSection && matchesTerm) {
         filteredData[key] = data;
       }
     });
-    
+
     console.log('Filtered Data:', filteredData); // Debug log
-    
+
     if (Object.keys(filteredData).length === 0) {
       container.innerHTML = '<div class="no-data-message">No grade data found. Start by inputting grades in the "Input Grades" tab.</div>';
       return;
     }
 
     // Use existing code for overall proficiency display
-    displayProficiencyFromData(filteredData, selectedSection, selectedQuarter, container, overallContainer);
+    displayProficiencyFromData(filteredData, selectedSection, selectedTerm, container, overallContainer);
     
   } catch (error) {
     console.error('Error fetching proficiency data:', error);
@@ -547,7 +552,7 @@ async function fetchAndDisplayProficiencyData() {
   }
 }
 
-function displayProficiencyFromData(filteredData, selectedSection, selectedQuarter, container, overallContainer) {
+function displayProficiencyFromData(filteredData, selectedSection, selectedTerm, container, overallContainer) {
   
   console.log('displayProficiencyFromData called with:', filteredData); // Debug log
   
@@ -568,7 +573,7 @@ function displayProficiencyFromData(filteredData, selectedSection, selectedQuart
 
   let hasData = false;
 
-  // The filteredData is already grouped by section/quarter from get_data.php
+  // The filteredData is already grouped by section/term from get_data.php
   // No need to regroup, just use it directly
   const groupedData = filteredData;
 
@@ -587,7 +592,7 @@ function displayProficiencyFromData(filteredData, selectedSection, selectedQuart
   overallData.totalStudents = overallData.totalBoys + overallData.totalGirls;
 
   if (hasData && overallData.totalStudents > 0) {
-    displayOverallProficiency(overallData, selectedSection, selectedQuarter);
+    displayOverallProficiency(overallData, selectedSection, selectedTerm);
   }
 
   // Display individual section data (only if not filtered by specific section)
@@ -610,23 +615,24 @@ function displayProficiencyFromData(filteredData, selectedSection, selectedQuart
     sectionHeader.textContent = sectionName;
     sectionCard.appendChild(sectionHeader);
 
-    const quarters = selectedQuarter ? [selectedQuarter] : ['1', '2', '3', '4'];
+    const terms = selectedTerm ? [selectedTerm] : ['1', '2', '3', '4'];
     let sectionHasData = false;
 
-    quarters.forEach(quarter => {
-      const key = `${sectionName}_Q${quarter}`;
+    terms.forEach(term => {
+      const key = `${sectionName}_T${term}`;
       const data = groupedData[key];
-      
+      const isFinalGrade = term === '4';
+
       if (data && (data.boys.length > 0 || data.girls.length > 0)) {
         sectionHasData = true;
-        
-        const quarterDiv = document.createElement('div');
-        quarterDiv.className = 'proficiency-quarter-data';
-        
-        const quarterHeader = document.createElement('div');
-        quarterHeader.className = 'quarter-header';
-        quarterHeader.textContent = `Quarter ${quarter}`;
-        quarterDiv.appendChild(quarterHeader);
+
+        const termDiv = document.createElement('div');
+        termDiv.className = isFinalGrade ? 'proficiency-term-data final-grade-summary' : 'proficiency-term-data';
+
+        const termHeader = document.createElement('div');
+        termHeader.className = 'term-header';
+        termHeader.textContent = termLabel(term);
+        termDiv.appendChild(termHeader);
 
         const boys = data.boys || [];
         const girls = data.girls || [];
@@ -634,6 +640,8 @@ function displayProficiencyFromData(filteredData, selectedSection, selectedQuart
 
         if (allGrades.length > 0) {
           const proficiencyLevels = categorizeProficiency(allGrades);
+          const boysLevels = categorizeProficiency(boys);
+          const girlsLevels = categorizeProficiency(girls);
           const levelsContainer = document.createElement('div');
           levelsContainer.className = 'proficiency-levels';
 
@@ -652,8 +660,8 @@ function displayProficiencyFromData(filteredData, selectedSection, selectedQuart
             levelDiv.className = `proficiency-level ${config.class}`;
             
             const grades = proficiencyLevels[config.key];
-            const boysCount = grades.filter(grade => boys.includes(grade)).length;
-            const girlsCount = grades.filter(grade => girls.includes(grade)).length;
+            const boysCount = boysLevels[config.key].length;
+            const girlsCount = girlsLevels[config.key].length;
             
             levelDiv.innerHTML = `
               <div class="level-title">${config.title}</div>
@@ -668,12 +676,12 @@ function displayProficiencyFromData(filteredData, selectedSection, selectedQuart
             levelsContainer.appendChild(levelDiv);
           });
 
-          quarterDiv.appendChild(levelsContainer);
+          termDiv.appendChild(levelsContainer);
         } else {
-          quarterDiv.innerHTML += '<div class="no-data-message">No grades recorded for this quarter.</div>';
+          termDiv.innerHTML += '<div class="no-data-message">No grades recorded for this term.</div>';
         }
-        
-        sectionCard.appendChild(quarterDiv);
+
+        sectionCard.appendChild(termDiv);
       }
     });
 
@@ -687,7 +695,7 @@ function displayProficiencyFromData(filteredData, selectedSection, selectedQuart
   }
 }
 
-function displayOverallProficiency(overallData, selectedSection, selectedQuarter) {
+function displayOverallProficiency(overallData, selectedSection, selectedTerm) {
   const container = document.getElementById('overallProficiencyContainer');
   
   const overallCard = document.createElement('div');
@@ -698,14 +706,14 @@ function displayOverallProficiency(overallData, selectedSection, selectedQuarter
   header.className = 'overall-proficiency-header';
   
   let filterText = '';
-  if (selectedSection && selectedQuarter) {
-    filterText = ` - ${selectedSection}, Quarter ${selectedQuarter}`;
+  if (selectedSection && selectedTerm) {
+    filterText = ` - ${selectedSection}, ${termLabel(selectedTerm)}`;
   } else if (selectedSection) {
     filterText = ` - ${selectedSection}`;
-  } else if (selectedQuarter) {
-    filterText = ` - Quarter ${selectedQuarter}`;
+  } else if (selectedTerm) {
+    filterText = ` - ${termLabel(selectedTerm)}`;
   } else {
-    filterText = ' - All Sections & Quarters';
+    filterText = ' - All Sections & Terms';
   }
   
   header.innerHTML = `
@@ -761,6 +769,8 @@ function displayOverallProficiency(overallData, selectedSection, selectedQuarter
   levelsDiv.className = 'overall-proficiency-levels';
   
   const proficiencyLevels = categorizeProficiency(overallData.allGrades);
+  const boysLevels = categorizeProficiency(overallData.allBoys);
+  const girlsLevels = categorizeProficiency(overallData.allGirls);
   const levelsGrid = document.createElement('div');
   levelsGrid.className = 'overall-levels-grid';
 
@@ -779,9 +789,9 @@ function displayOverallProficiency(overallData, selectedSection, selectedQuarter
     levelDiv.className = `overall-level ${config.class}`;
     
     const grades = proficiencyLevels[config.key];
-    const boysCount = grades.filter(grade => overallData.allBoys.includes(grade)).length;
-    const girlsCount = grades.filter(grade => overallData.allGirls.includes(grade)).length;
-    const percentage = overallData.totalStudents > 0 ? 
+    const boysCount = boysLevels[config.key].length;
+    const girlsCount = girlsLevels[config.key].length;
+    const percentage = overallData.totalStudents > 0 ?
       ((grades.length / overallData.totalStudents) * 100).toFixed(1) : 0;
     
     levelDiv.innerHTML = `
@@ -807,7 +817,7 @@ function displayOverallProficiency(overallData, selectedSection, selectedQuarter
 document.getElementById('refreshProficiencyData').addEventListener('click', displayProficiencyData);
 document.getElementById('proficiencySchoolYear').addEventListener('change', displayProficiencyData);
 document.getElementById('proficiencySection').addEventListener('change', displayProficiencyData);
-document.getElementById('proficiencyQuarter').addEventListener('change', displayProficiencyData);
+document.getElementById('proficiencyTerm').addEventListener('change', displayProficiencyData);
 
 // Delete data functionality
 function updateDeleteSectionSelect() {
@@ -827,22 +837,22 @@ document.getElementById('deleteDataForm').addEventListener('submit', async (e) =
   e.preventDefault();
   
   const sectionId = document.getElementById('deleteSectionSelect').value;
-  const quarter = document.getElementById('deleteQuarterSelect').value;
+  const term = document.getElementById('deleteTermSelect').value;
   const confirmed = document.getElementById('deleteConfirmation').checked;
-  
-  if (!sectionId || !quarter) {
-    showMessage('Please select both section and quarter', 'error');
+
+  if (!sectionId || !term) {
+    showMessage('Please select both section and term', 'error');
     return;
   }
-  
+
   if (!confirmed) {
     showMessage('Please confirm that you understand this action cannot be undone', 'error');
     return;
   }
-  
+
   // Additional confirmation dialog
   const sectionName = sections.find(s => s.id == sectionId)?.section_name || 'Unknown Section';
-  const confirmMessage = `Are you absolutely sure you want to delete all grade data for "${sectionName}" - Quarter ${quarter}?\n\nThis action cannot be undone!`;
+  const confirmMessage = `Are you absolutely sure you want to delete all grade data for "${sectionName}" - ${termLabel(term)}?\n\nThis action cannot be undone!`;
   
   if (!confirm(confirmMessage)) {
     return;
@@ -856,7 +866,7 @@ document.getElementById('deleteDataForm').addEventListener('submit', async (e) =
       },
       body: JSON.stringify({
         section_id: sectionId,
-        quarter: quarter
+        term: term
       })
     });
     

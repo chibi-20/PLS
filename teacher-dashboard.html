@@ -320,16 +320,26 @@
       font-size: 1.1em;
     }
 
-    .proficiency-quarter-data {
+    .proficiency-term-data {
       padding: 20px;
     }
 
-    .quarter-header {
+    .term-header {
       color: #004c99;
       font-weight: 600;
       margin-bottom: 15px;
       padding-bottom: 8px;
       border-bottom: 2px solid #e2e8f0;
+    }
+
+    .final-grade-summary {
+      background: #fff8e1;
+      border-top: 3px solid #ffc107;
+    }
+
+    .final-grade-summary .term-header {
+      color: #b8860b;
+      border-bottom-color: #ffc107;
     }
 
     .proficiency-levels {
@@ -727,12 +737,12 @@
           <option value="">Overall (All Sections)</option>
         </select>
         
-        <label for="quarterSelect">Select Quarter:</label>
-        <select id="quarterSelect">
-          <option value="1">Quarter 1</option>
-          <option value="2">Quarter 2</option>
-          <option value="3">Quarter 3</option>
-          <option value="4">Quarter 4</option>
+        <label for="termSelect">Select Term:</label>
+        <select id="termSelect">
+          <option value="1">Term 1</option>
+          <option value="2">Term 2</option>
+          <option value="3">Term 3</option>
+          <option value="4">Final Grade</option>
         </select>
         
         <div class="chart-container">
@@ -790,12 +800,12 @@
               <option value="">-- Choose a section --</option>
             </select>
 
-            <label for="quarterInput">Quarter:</label>
-            <select id="quarterInput">
-              <option value="1">Quarter 1</option>
-              <option value="2">Quarter 2</option>
-              <option value="3">Quarter 3</option>
-              <option value="4">Quarter 4</option>
+            <label for="termInput">Term:</label>
+            <select id="termInput">
+              <option value="1">Term 1</option>
+              <option value="2">Term 2</option>
+              <option value="3">Term 3</option>
+              <option value="4">Final Grade</option>
             </select>
 
             <label for="gradesBoys">Boys' Grades (One grade per line):</label>
@@ -811,7 +821,7 @@
         <div class="tab-content" id="deleteDataTab">
           <h2>Delete Grade Data</h2>
           <div class="delete-warning">
-            <p><strong>⚠️ Warning:</strong> This action will permanently delete all grade data for the selected section and quarter. This cannot be undone!</p>
+            <p><strong>⚠️ Warning:</strong> This action will permanently delete all grade data for the selected section and term. This cannot be undone!</p>
           </div>
           
           <form id="deleteDataForm">
@@ -820,13 +830,13 @@
               <option value="">-- Choose a section --</option>
             </select>
 
-            <label for="deleteQuarterSelect">Select Quarter:</label>
-            <select id="deleteQuarterSelect" required>
-              <option value="">-- Choose a quarter --</option>
-              <option value="1">Quarter 1</option>
-              <option value="2">Quarter 2</option>
-              <option value="3">Quarter 3</option>
-              <option value="4">Quarter 4</option>
+            <label for="deleteTermSelect">Select Term:</label>
+            <select id="deleteTermSelect" required>
+              <option value="">-- Choose a term --</option>
+              <option value="1">Term 1</option>
+              <option value="2">Term 2</option>
+              <option value="3">Term 3</option>
+              <option value="4">Final Grade</option>
             </select>
 
             <div class="delete-confirmation">
@@ -864,13 +874,13 @@
             </div>
             
             <div class="filter-group">
-              <label for="proficiencyQuarter">Filter by Quarter:</label>
-              <select id="proficiencyQuarter">
-                <option value="">All Quarters</option>
-                <option value="1">Quarter 1</option>
-                <option value="2">Quarter 2</option>
-                <option value="3">Quarter 3</option>
-                <option value="4">Quarter 4</option>
+              <label for="proficiencyTerm">Filter by Term:</label>
+              <select id="proficiencyTerm">
+                <option value="">All Terms</option>
+                <option value="1">Term 1</option>
+                <option value="2">Term 2</option>
+                <option value="3">Term 3</option>
+                <option value="4">Final Grade</option>
               </select>
             </div>
             
