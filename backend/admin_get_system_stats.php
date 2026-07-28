@@ -9,33 +9,26 @@ try {
     $teachersResult = $conn->query($teachersQuery);
     $totalTeachers = $teachersResult->fetch_assoc()['total'];
     
-    // Get total sections (created by teachers only)
-    $sectionsQuery = "
-        SELECT COUNT(*) as total 
-        FROM sections s 
-        JOIN users u ON s.created_by = u.id 
-        WHERE u.role = 'teacher'
-    ";
+    // Get total sections (canonical, admin-managed sections)
+    $sectionsQuery = "SELECT COUNT(*) as total FROM sections";
     $sectionsResult = $conn->query($sectionsQuery);
     $totalSections = $sectionsResult->fetch_assoc()['total'];
-    
-    // Get total grades (from teacher sections only)
+
+    // Get total grades (from teacher-entered data only)
     $gradesQuery = "
-        SELECT COUNT(*) as total 
-        FROM grades g 
-        JOIN sections s ON g.section_id = s.id 
-        JOIN users u ON s.created_by = u.id 
+        SELECT COUNT(*) as total
+        FROM grades g
+        JOIN users u ON g.created_by = u.id
         WHERE u.role = 'teacher'
     ";
     $gradesResult = $conn->query($gradesQuery);
     $totalGrades = $gradesResult->fetch_assoc()['total'];
-    
+
     // Get average performance (from teacher grades only)
     $avgQuery = "
-        SELECT AVG(g.student_grade) as avg_grade 
-        FROM grades g 
-        JOIN sections s ON g.section_id = s.id 
-        JOIN users u ON s.created_by = u.id 
+        SELECT AVG(g.student_grade) as avg_grade
+        FROM grades g
+        JOIN users u ON g.created_by = u.id
         WHERE u.role = 'teacher'
     ";
     $avgResult = $conn->query($avgQuery);

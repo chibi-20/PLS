@@ -54,37 +54,21 @@ try {
     $conn->begin_transaction();
     
     try {
-        // Get all section IDs created by this teacher
-        $sectionStmt = $conn->prepare("SELECT id FROM sections WHERE created_by = ?");
-        $sectionStmt->bind_param("i", $teacherId);
-        $sectionStmt->execute();
-        $sectionResult = $sectionStmt->get_result();
-        
-        $sectionIds = [];
-        while ($row = $sectionResult->fetch_assoc()) {
-            $sectionIds[] = $row['id'];
-        }
-        $sectionStmt->close();
-        
-        // Delete grades for all sections created by this teacher
-        if (!empty($sectionIds)) {
-            $placeholders = implode(',', array_fill(0, count($sectionIds), '?'));
-            $deleteGradesStmt = $conn->prepare("DELETE FROM grades WHERE section_id IN ($placeholders)");
-            $deleteGradesStmt->bind_param(str_repeat('i', count($sectionIds)), ...$sectionIds);
-            $deleteGradesStmt->execute();
-            $deletedGrades = $deleteGradesStmt->affected_rows;
-            $deleteGradesStmt->close();
-        } else {
-            $deletedGrades = 0;
-        }
-        
-        // Delete all sections created by this teacher
-        $deleteSectionsStmt = $conn->prepare("DELETE FROM sections WHERE created_by = ?");
-        $deleteSectionsStmt->bind_param("i", $teacherId);
-        $deleteSectionsStmt->execute();
-        $deletedSections = $deleteSectionsStmt->affected_rows;
-        $deleteSectionsStmt->close();
-        
+        // Delete this teacher's own grade entries (sections themselves are
+        // admin-owned and may still be assigned to other teachers, so they stay)
+        $deleteGradesStmt = $conn->prepare("DELETE FROM grades WHERE created_by = ?");
+        $deleteGradesStmt->bind_param("i", $teacherId);
+        $deleteGradesStmt->execute();
+        $deletedGrades = $deleteGradesStmt->affected_rows;
+        $deleteGradesStmt->close();
+
+        // Unlink this teacher from their assigned sections
+        $deleteLinksStmt = $conn->prepare("DELETE FROM teacher_sections WHERE teacher_id = ?");
+        $deleteLinksStmt->bind_param("i", $teacherId);
+        $deleteLinksStmt->execute();
+        $unlinkedSections = $deleteLinksStmt->affected_rows;
+        $deleteLinksStmt->close();
+
         // Delete the teacher account
         $deleteTeacherStmt = $conn->prepare("DELETE FROM users WHERE id = ? AND role = 'teacher'");
         $deleteTeacherStmt->bind_param("i", $teacherId);
@@ -101,7 +85,7 @@ try {
                 "message" => "Teacher account deleted successfully",
                 "details" => [
                     "teacher_name" => $teacher['fullname'],
-                    "sections_deleted" => $deletedSections,
+                    "sections_unlinked" => $unlinkedSections,
                     "grades_deleted" => $deletedGrades
                 ]
             ]);

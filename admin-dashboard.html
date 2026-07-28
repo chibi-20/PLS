@@ -1281,6 +1281,7 @@
           <button class="tab-button" data-tab="teacherAnalyticsTab">👨‍🏫 Teacher Analytics</button>
           <button class="tab-button" data-tab="systemReportsTab">📈 System Reports</button>
           <button class="tab-button" data-tab="lisComparisonTab">📊 LIS Comparison</button>
+          <button class="tab-button" data-tab="sectionsTab">🏫 Sections</button>
           <button class="tab-button" data-tab="teacherManagementTab">👥 Teacher Management</button>
         </div>
 
@@ -1489,14 +1490,6 @@
             </div>
             
             <div class="form-row">
-              <div class="form-group">
-                <label for="lisStudentCount">Official LIS Student Count:</label>
-                <input type="number" id="lisStudentCount" placeholder="Enter the official student count from LIS" min="0" max="1000">
-                <small style="color: #6b7280; font-size: 0.85em;">
-                  Enter the exact number of students for this subject, grade, and term as recorded in LIS
-                </small>
-              </div>
-              
               <div class="form-group" style="display: flex; align-items: end;">
                 <button type="button" id="compareLisData" onclick="performLisComparison()">
                   🔍 Compare Data
@@ -1504,11 +1497,11 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Comparison Results -->
           <div id="lisComparisonResults" style="display: none;">
             <h3>📈 Comparison Results</h3>
-            
+
             <div class="comparison-summary">
               <div class="comparison-card lis-count">
                 <div class="comparison-title">
@@ -1518,7 +1511,7 @@
                 <div class="comparison-number" id="lisOfficialCount">0</div>
                 <div class="comparison-subtitle">Students per LIS</div>
               </div>
-              
+
               <div class="comparison-card system-count">
                 <div class="comparison-title">
                   <span>💾</span>
@@ -1527,7 +1520,7 @@
                 <div class="comparison-number" id="systemStudentCount">0</div>
                 <div class="comparison-subtitle">Students with proficiency data</div>
               </div>
-              
+
               <div class="comparison-card difference">
                 <div class="comparison-title">
                   <span>📊</span>
@@ -1536,7 +1529,7 @@
                 <div class="comparison-number" id="countDifference">0</div>
                 <div class="comparison-subtitle" id="differenceStatus">Perfect match</div>
               </div>
-              
+
               <div class="comparison-card percentage">
                 <div class="comparison-title">
                   <span>📈</span>
@@ -1546,10 +1539,96 @@
                 <div class="comparison-subtitle">Students with data</div>
               </div>
             </div>
-            
+
+            <div class="table-container" style="margin-bottom: 20px;">
+              <table class="teacher-table" id="lisSectionTable">
+                <thead>
+                  <tr>
+                    <th>Section</th>
+                    <th>LIS Official Count</th>
+                    <th>System Count</th>
+                    <th>Difference</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="lisSectionTableBody"></tbody>
+              </table>
+            </div>
+
             <div id="comparisonDetails">
               <!-- Detailed comparison results will be displayed here -->
             </div>
+          </div>
+        </div>
+
+        <!-- Sections Tab -->
+        <div id="sectionsTab" class="tab-content">
+          <h2>🏫 Sections</h2>
+          <p style="color: #6b7280; margin-bottom: 25px;">
+            Manage the canonical list of sections per grade level and record the official DepEd LIS student counts used by LIS Comparison.
+          </p>
+
+          <div class="lis-comparison-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="sectionsSchoolYear">School Year:</label>
+                <select id="sectionsSchoolYear" onchange="loadSchoolTotal(); loadAdminSections();">
+                  <option value="2025-2026">2025-2026</option>
+                  <option value="2026-2027">2026-2027</option>
+                  <option value="2027-2028">2027-2028</option>
+                  <option value="2028-2029">2028-2029</option>
+                  <option value="2029-2030">2029-2030</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="comparison-card lis-count" style="max-width: 340px;">
+              <div class="comparison-title">
+                <span>🏫</span>
+                Total School Students (LIS)
+              </div>
+              <div class="comparison-number" id="totalSchoolStudents">0</div>
+              <div class="comparison-subtitle" id="totalSchoolStudentsSubtitle">Sum of official LIS counts across all sections</div>
+            </div>
+          </div>
+
+          <div class="lis-comparison-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="sectionsGradeLevel">Grade Level:</label>
+                <select id="sectionsGradeLevel" onchange="loadAdminSections()">
+                  <option value="Grade 7">Grade 7</option>
+                  <option value="Grade 8">Grade 8</option>
+                  <option value="Grade 9">Grade 9</option>
+                  <option value="Grade 10">Grade 10</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="newSectionName">Add New Section:</label>
+                <input type="text" id="newSectionName" placeholder="e.g., Section A">
+              </div>
+
+              <div class="form-group" style="display: flex; align-items: end;">
+                <button type="button" class="btn-primary" onclick="addAdminSection()">➕ Add Section</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="teacher-table" id="sectionsTable">
+              <thead>
+                <tr>
+                  <th>Section</th>
+                  <th>Teachers Assigned</th>
+                  <th>Official LIS Count</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sectionsTableBody">
+                <!-- Sections will be loaded here -->
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -1823,6 +1902,9 @@
           loadSystemReports();
         } else if (targetTab === 'lisComparisonTab') {
           populateLisSubjects();
+        } else if (targetTab === 'sectionsTab') {
+          loadSchoolTotal();
+          loadAdminSections();
         } else if (targetTab === 'teacherManagementTab') {
           loadTeacherAccounts();
         }
@@ -1835,39 +1917,42 @@
       const subject = document.getElementById('lisSubject').value;
       const gradeLevel = document.getElementById('lisGradeLevel').value;
       const term = document.getElementById('lisTerm').value;
-      const lisCount = parseInt(document.getElementById('lisStudentCount').value);
-      
-      if (!schoolYear || !subject || !gradeLevel || !term || !lisCount) {
+
+      if (!schoolYear || !subject || !gradeLevel || !term) {
         alert('Please fill in all fields before comparing.');
         return;
       }
-      
+
       try {
         // Show loading state
         document.getElementById('compareLisData').textContent = '🔄 Comparing...';
         document.getElementById('compareLisData').disabled = true;
-        
-        // Get system student count for the specified criteria
+
         const response = await fetch(`backend/admin_get_lis_comparison.php?school_year=${encodeURIComponent(schoolYear)}&subject=${encodeURIComponent(subject)}&grade_level=${encodeURIComponent(gradeLevel)}&term=${term}`);
         const data = await response.json();
-        
+
         if (data.success) {
-          const systemCount = data.student_count;
-          const difference = systemCount - lisCount;
-          const coverage = lisCount > 0 ? Math.round((systemCount / lisCount) * 100) : 0;
-          
+          const lisCount = data.totals.lis_count;
+          const systemCount = data.totals.system_count;
+          const difference = lisCount !== null ? systemCount - lisCount : null;
+          const coverage = lisCount !== null && lisCount > 0 ? Math.round((systemCount / lisCount) * 100) : null;
+
           // Update comparison cards
-          document.getElementById('lisOfficialCount').textContent = lisCount.toLocaleString();
+          document.getElementById('lisOfficialCount').textContent = lisCount !== null ? lisCount.toLocaleString() : 'Not set';
           document.getElementById('systemStudentCount').textContent = systemCount.toLocaleString();
-          document.getElementById('countDifference').textContent = difference >= 0 ? `+${difference}` : difference.toString();
-          document.getElementById('dataCoverage').textContent = `${coverage}%`;
-          
-          // Update status and styling
+          document.getElementById('countDifference').textContent = difference === null ? '—' : (difference >= 0 ? `+${difference}` : difference.toString());
+          document.getElementById('dataCoverage').textContent = coverage === null ? '—' : `${coverage}%`;
+
           const differenceElement = document.getElementById('countDifference');
           const statusElement = document.getElementById('differenceStatus');
           const coverageElement = document.getElementById('dataCoverage');
-          
-          if (difference === 0) {
+
+          if (difference === null) {
+            differenceElement.className = 'comparison-number';
+            statusElement.textContent = 'No LIS count recorded yet';
+            statusElement.className = 'comparison-subtitle';
+            coverageElement.className = 'comparison-number';
+          } else if (difference === 0) {
             differenceElement.className = 'comparison-number status-positive';
             statusElement.textContent = 'Perfect match!';
             statusElement.className = 'comparison-subtitle status-positive';
@@ -1880,50 +1965,63 @@
             statusElement.textContent = 'Missing students';
             statusElement.className = 'comparison-subtitle status-negative';
           }
-          
-          if (coverage >= 95) {
-            coverageElement.className = 'comparison-number status-positive';
-          } else if (coverage >= 80) {
-            coverageElement.className = 'comparison-number status-warning';
-          } else {
-            coverageElement.className = 'comparison-number status-negative';
+
+          if (coverage !== null) {
+            if (coverage >= 95) {
+              coverageElement.className = 'comparison-number status-positive';
+            } else if (coverage >= 80) {
+              coverageElement.className = 'comparison-number status-warning';
+            } else {
+              coverageElement.className = 'comparison-number status-negative';
+            }
           }
-          
-          // Show detailed information
-          const detailsHtml = `
+
+          // Per-section breakdown table
+          const tbody = document.getElementById('lisSectionTableBody');
+          if (data.sections.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No sections found for this grade level.</td></tr>';
+          } else {
+            tbody.innerHTML = data.sections.map(section => {
+              let statusLabel, statusClass;
+              if (section.lis_count === null) {
+                statusLabel = 'No LIS count set';
+                statusClass = '';
+              } else if (section.difference === 0) {
+                statusLabel = '✅ Match';
+                statusClass = 'status-positive';
+              } else if (section.difference > 0) {
+                statusLabel = '⚠️ More than LIS';
+                statusClass = 'status-warning';
+              } else {
+                statusLabel = '❌ Missing students';
+                statusClass = 'status-negative';
+              }
+
+              return `
+                <tr>
+                  <td>${section.section_name}</td>
+                  <td>${section.lis_count !== null ? section.lis_count : 'Not set'}</td>
+                  <td>${section.system_count}</td>
+                  <td class="${statusClass}">${section.difference !== null ? (section.difference >= 0 ? `+${section.difference}` : section.difference) : '—'}</td>
+                  <td class="${statusClass}">${statusLabel}</td>
+                </tr>
+              `;
+            }).join('');
+          }
+
+          document.getElementById('comparisonDetails').innerHTML = `
             <h4>📋 Comparison Details</h4>
-            <div style="margin-bottom: 15px;">
+            <div>
               <strong>Query Parameters:</strong><br>
               School Year: ${schoolYear} | Subject: ${subject} | Grade: ${gradeLevel} | Term: ${term}
             </div>
-            
-            <div style="margin-bottom: 15px;">
-              <strong>Analysis:</strong><br>
-              ${difference === 0 
-                ? '✅ Perfect match! The number of students in the system matches the LIS count exactly.' 
-                : difference > 0 
-                  ? `⚠️ There are ${Math.abs(difference)} more students with proficiency data than the official LIS count. This might indicate duplicate entries or students from other sections.`
-                  : `❌ There are ${Math.abs(difference)} students missing from the proficiency data. ${coverage}% of the expected students have data entered.`
-              }
-            </div>
-            
-            ${data.section_breakdown ? `
-              <div>
-                <strong>Section Breakdown:</strong><br>
-                ${data.section_breakdown.map(section => 
-                  `• ${section.section_name}: ${section.student_count} students`
-                ).join('<br>')}
-              </div>
-            ` : ''}
           `;
-          
-          document.getElementById('comparisonDetails').innerHTML = detailsHtml;
           document.getElementById('lisComparisonResults').style.display = 'block';
-          
+
         } else {
           alert('Error getting system data: ' + data.message);
         }
-        
+
       } catch (error) {
         console.error('Error performing LIS comparison:', error);
         alert('Error performing comparison. Please try again.');
@@ -1981,6 +2079,182 @@
           <option value="TLE">TLE</option>
           <option value="ESP">ESP</option>
         `;
+      }
+    }
+
+    // Sections tab functionality
+    function currentSectionsSchoolYear() {
+      return document.getElementById('sectionsSchoolYear').value;
+    }
+
+    async function loadSchoolTotal() {
+      try {
+        const schoolYear = currentSectionsSchoolYear();
+        const response = await fetch(`backend/admin_get_school_total.php?school_year=${encodeURIComponent(schoolYear)}`);
+        const data = await response.json();
+
+        if (data.success) {
+          document.getElementById('totalSchoolStudents').textContent = data.total_students.toLocaleString();
+          document.getElementById('totalSchoolStudentsSubtitle').textContent =
+            `Sum of official LIS counts across all sections (${data.sections_with_count} of ${data.sections_total} sections have a count set)`;
+        }
+      } catch (error) {
+        console.error('Error loading school total:', error);
+      }
+    }
+
+    async function loadAdminSections() {
+      const gradeLevel = document.getElementById('sectionsGradeLevel').value;
+      const schoolYear = currentSectionsSchoolYear();
+      const tbody = document.getElementById('sectionsTableBody');
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Loading...</td></tr>';
+
+      try {
+        const response = await fetch(`backend/admin_get_sections.php?grade_level=${encodeURIComponent(gradeLevel)}&school_year=${encodeURIComponent(schoolYear)}`);
+        const data = await response.json();
+
+        if (!data.success) {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">${data.message}</td></tr>`;
+          return;
+        }
+
+        if (data.sections.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">No sections yet for this grade level. Add one above.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.sections.map(section => `
+          <tr>
+            <td>${section.section_name}</td>
+            <td>${section.teacher_count}</td>
+            <td>
+              <input type="number" min="0" style="width:100px;" id="lisCount_${section.id}"
+                     value="${section.official_count ?? ''}" placeholder="Not set">
+            </td>
+            <td class="action-buttons">
+              <button class="btn-icon btn-edit" onclick="saveSectionLisCount(${section.id})">💾 Save</button>
+              <button class="btn-icon btn-edit" onclick="renameAdminSection(${section.id}, '${section.section_name.replace(/'/g, "\\'")}')">✏️ Rename</button>
+              <button class="btn-icon btn-delete" onclick="deleteAdminSection(${section.id}, '${section.section_name.replace(/'/g, "\\'")}')">🗑️ Delete</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading sections:', error);
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Error loading sections.</td></tr>';
+      }
+    }
+
+    async function addAdminSection() {
+      const gradeLevel = document.getElementById('sectionsGradeLevel').value;
+      const schoolYear = currentSectionsSchoolYear();
+      const nameInput = document.getElementById('newSectionName');
+      const sectionName = nameInput.value.trim();
+
+      if (!sectionName) {
+        alert('Please enter a section name.');
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('section_name', sectionName);
+        formData.append('grade_level', gradeLevel);
+        formData.append('school_year', schoolYear);
+
+        const response = await fetch('backend/admin_add_section.php', { method: 'POST', body: formData });
+        const data = await response.json();
+
+        if (data.success) {
+          nameInput.value = '';
+          loadAdminSections();
+          loadSchoolTotal();
+        } else {
+          alert('Error adding section: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error adding section:', error);
+        alert('Error adding section. Please try again.');
+      }
+    }
+
+    async function renameAdminSection(sectionId, currentName) {
+      const newName = prompt('Rename section:', currentName);
+      if (newName === null) return; // cancelled
+
+      const trimmed = newName.trim();
+      if (!trimmed || trimmed === currentName) return;
+
+      try {
+        const response = await fetch('backend/admin_update_section.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ section_id: sectionId, section_name: trimmed })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          loadAdminSections();
+        } else {
+          alert('Error renaming section: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error renaming section:', error);
+        alert('Error renaming section. Please try again.');
+      }
+    }
+
+    async function saveSectionLisCount(sectionId) {
+      const schoolYear = currentSectionsSchoolYear();
+      const input = document.getElementById(`lisCount_${sectionId}`);
+      const officialCount = input.value === '' ? null : parseInt(input.value);
+
+      if (officialCount !== null && (isNaN(officialCount) || officialCount < 0)) {
+        alert('Please enter a valid, non-negative count.');
+        return;
+      }
+
+      try {
+        const response = await fetch('backend/admin_update_section.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ section_id: sectionId, school_year: schoolYear, official_count: officialCount })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          alert('LIS count saved.');
+          loadSchoolTotal();
+        } else {
+          alert('Error saving LIS count: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error saving LIS count:', error);
+        alert('Error saving LIS count. Please try again.');
+      }
+    }
+
+    async function deleteAdminSection(sectionId, sectionName) {
+      if (!confirm(`Delete "${sectionName}"? This also removes all grade data recorded under it and cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch('backend/admin_delete_section.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ section_id: sectionId })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          loadAdminSections();
+          loadSchoolTotal();
+        } else {
+          alert('Error deleting section: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error deleting section:', error);
+        alert('Error deleting section. Please try again.');
       }
     }
 

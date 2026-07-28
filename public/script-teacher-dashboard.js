@@ -1,8 +1,7 @@
 // Elements
-const sectionListDiv = document.getElementById("sectionList");
+const sectionCheckboxList = document.getElementById("sectionCheckboxList");
 const sectionSelect = document.getElementById("sectionSelect");
 const proficiencySection = document.getElementById("proficiencySection");
-const addSectionForm = document.getElementById("addSectionForm");
 const termSelect = document.getElementById("termSelect");
 const chartSectionSelect = document.createElement("select"); // We'll add this to sidebar
 
@@ -36,30 +35,14 @@ async function loadSections() {
 
 // Render sections in the UI
 function renderSections() {
-  // Clear existing content
-  sectionListDiv.innerHTML = "";
   sectionSelect.innerHTML = '<option value="">-- Choose a section --</option>';
   proficiencySection.innerHTML = '<option value="">All Sections</option>';
-  
+
   // Update chart section selector
   const chartSectionSelect = document.getElementById("chartSectionSelect");
   chartSectionSelect.innerHTML = '<option value="">Overall (All Sections)</option>';
 
-  if (sections.length === 0) {
-    sectionListDiv.innerHTML = '<p style="color: #666; font-style: italic; text-align: center; padding: 20px;">No sections found. Add your first section above!</p>';
-    return;
-  }
-
-  // Render section list
   sections.forEach(section => {
-    const sectionDiv = document.createElement("div");
-    sectionDiv.className = "section-item";
-    sectionDiv.innerHTML = `
-      <span class="section-name">${section.section_name}</span>
-      <button class="delete-section" onclick="deleteSection(${section.id}, '${section.section_name}')">Delete</button>
-    `;
-    sectionListDiv.appendChild(sectionDiv);
-
     // Add to select dropdowns
     const option1 = document.createElement("option");
     option1.value = section.section_name;
@@ -76,71 +59,75 @@ function renderSections() {
     option3.textContent = section.section_name;
     chartSectionSelect.appendChild(option3);
   });
-  
+
   // Update delete section selector
   updateDeleteSectionSelect();
 }
 
-// Add new section
-addSectionForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const sectionName = document.getElementById("sectionName").value.trim();
-  
-  if (!sectionName) {
-    showMessage('Please enter a section name', 'error');
-    return;
-  }
-
+// Load the canonical sections for the teacher's grade level, with checkmarks
+// for the ones already assigned to them
+async function loadTeacherSections() {
   try {
-    const formData = new FormData();
-    formData.append('section_name', sectionName);
-
-    const response = await fetch('backend/add_section.php', {
-      method: 'POST',
-      body: formData
-    });
-
+    const response = await fetch('backend/get_sections_by_grade.php');
     const result = await response.json();
 
     if (result.success) {
-      showMessage('Section added successfully!', 'success');
-      addSectionForm.reset();
-      loadSections(); // Reload sections
+      renderSectionCheckboxes(result.sections);
     } else {
-      showMessage(result.message, 'error');
+      sectionCheckboxList.innerHTML = `<p style="color:#c0392b;">${result.message}</p>`;
     }
   } catch (error) {
-    console.error('Error adding section:', error);
-    showMessage('Error adding section. Please try again.', 'error');
+    console.error('Error loading grade-level sections:', error);
+    sectionCheckboxList.innerHTML = '<p style="color:#c0392b;">Error loading sections. Please refresh the page.</p>';
   }
-});
+}
 
-// Delete section
-async function deleteSection(sectionId, sectionName) {
-  if (!confirm(`Are you sure you want to delete "${sectionName}"? This action cannot be undone.`)) {
+function renderSectionCheckboxes(gradeSections) {
+  if (!sectionCheckboxList) return;
+
+  if (gradeSections.length === 0) {
+    sectionCheckboxList.innerHTML = '<p style="color: #666; font-style: italic;">No sections have been set up for your grade level yet. Contact your admin.</p>';
     return;
   }
+
+  sectionCheckboxList.innerHTML = gradeSections.map(section => `
+    <label class="section-item" style="display:flex; align-items:center; gap:8px;">
+      <input type="checkbox" data-section-id="${section.id}" ${section.assigned ? 'checked' : ''}>
+      <span class="section-name">${section.section_name}</span>
+    </label>
+  `).join('');
+
+  sectionCheckboxList.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', () => toggleSectionAssignment(checkbox));
+  });
+}
+
+async function toggleSectionAssignment(checkbox) {
+  const sectionId = checkbox.dataset.sectionId;
+  const endpoint = checkbox.checked ? 'backend/add_section.php' : 'backend/delete_section.php';
+
+  checkbox.disabled = true;
 
   try {
     const formData = new FormData();
     formData.append('section_id', sectionId);
 
-    const response = await fetch('backend/delete_section.php', {
-      method: 'POST',
-      body: formData
-    });
-
+    const response = await fetch(endpoint, { method: 'POST', body: formData });
     const result = await response.json();
 
     if (result.success) {
-      showMessage('Section deleted successfully!', 'success');
-      loadSections(); // Reload sections
+      showMessage(checkbox.checked ? 'Section added!' : 'Section removed!', 'success');
+      loadSections(); // Refresh section dropdowns elsewhere in the dashboard
     } else {
       showMessage(result.message, 'error');
+      checkbox.checked = !checkbox.checked; // revert on failure
     }
   } catch (error) {
-    console.error('Error deleting section:', error);
-    showMessage('Error deleting section. Please try again.', 'error');
+    console.error('Error updating section assignment:', error);
+    showMessage('Error updating section. Please try again.', 'error');
+    checkbox.checked = !checkbox.checked; // revert on failure
+  } finally {
+    checkbox.disabled = false;
   }
 }
 
@@ -897,4 +884,5 @@ document.getElementById('deleteDataForm').addEventListener('submit', async (e) =
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
   loadSections();
+  loadTeacherSections();
 });

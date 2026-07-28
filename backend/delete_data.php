@@ -25,8 +25,8 @@ try {
         exit;
     }
 
-    // Verify that the section belongs to the current user
-    $stmt = $conn->prepare("SELECT id FROM sections WHERE id = ? AND created_by = ?");
+    // Verify that the section is assigned to the current user
+    $stmt = $conn->prepare("SELECT id FROM teacher_sections WHERE section_id = ? AND teacher_id = ?");
     $stmt->bind_param("ii", $section_id, $user_id);
     $stmt->execute();
     $section = $stmt->get_result()->fetch_assoc();
@@ -37,9 +37,10 @@ try {
         exit;
     }
 
-    // Delete grades for the specified section and term
-    $stmt = $conn->prepare("DELETE FROM grades WHERE section_id = ? AND term = ?");
-    $stmt->bind_param("ii", $section_id, $term);
+    // Delete grades for the specified section and term - scoped to this teacher's
+    // own entries, since a section can now be shared by multiple subject teachers
+    $stmt = $conn->prepare("DELETE FROM grades WHERE section_id = ? AND term = ? AND created_by = ?");
+    $stmt->bind_param("iii", $section_id, $term, $user_id);
     $stmt->execute();
 
     $deleted_count = $stmt->affected_rows;

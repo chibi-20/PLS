@@ -51,8 +51,8 @@ try {
             SUM(CASE WHEN g.gender = 'Male' THEN 1 ELSE 0 END) as total_male,
             SUM(CASE WHEN g.gender = 'Female' THEN 1 ELSE 0 END) as total_female
         FROM users u
-        LEFT JOIN sections s ON u.id = s.created_by
-        LEFT JOIN grades g ON s.id = g.section_id
+        LEFT JOIN grades g ON g.created_by = u.id
+        LEFT JOIN sections s ON g.section_id = s.id
         WHERE g.id IS NOT NULL AND u.role = 'teacher'
         GROUP BY u.id 
         ORDER BY u.fullname

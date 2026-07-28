@@ -1,4 +1,7 @@
 <?php
+// Unlinks the logged-in teacher from one of their assigned sections (used by the
+// "Manage Sections" checkbox list). The canonical section itself is not deleted -
+// it's admin-owned and may still be assigned to other teachers.
 session_start();
 header('Content-Type: application/json');
 require_once 'db.php';
@@ -20,34 +23,23 @@ if ($sectionId <= 0) {
 }
 
 try {
-    // Verify that this section belongs to the current user
-    $stmt = $conn->prepare("SELECT id FROM sections WHERE id = ? AND created_by = ?");
-    $stmt->bind_param("ii", $sectionId, $userId);
+    $stmt = $conn->prepare("DELETE FROM teacher_sections WHERE teacher_id = ? AND section_id = ?");
+    $stmt->bind_param("ii", $userId, $sectionId);
     $stmt->execute();
-    $stmt->store_result();
-    
-    if ($stmt->num_rows === 0) {
-        echo json_encode(["success" => false, "message" => "Section not found or not authorized"]);
+
+    if ($stmt->affected_rows === 0) {
+        echo json_encode(["success" => false, "message" => "Section not found or not assigned to you"]);
         $stmt->close();
         exit;
     }
     $stmt->close();
-    
-    // Delete the section
-    $stmt = $conn->prepare("DELETE FROM sections WHERE id = ? AND created_by = ?");
-    $stmt->bind_param("ii", $sectionId, $userId);
-    $stmt->execute();
-    $stmt->close();
-    
+
     echo json_encode([
         "success" => true,
-        "message" => "Section deleted successfully"
+        "message" => "Section removed successfully"
     ]);
-    
+
 } catch (Exception $e) {
-    echo json_encode([
-        "success" => false,
-        "message" => "Error deleting section: " . $e->getMessage()
-    ]);
+    echo json_encode(["success" => false, "message" => "Error removing section: " . $e->getMessage()]);
 }
 ?>

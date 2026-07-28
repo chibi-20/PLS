@@ -12,8 +12,14 @@ if (!isset($_SESSION['user_id'])) {
 $userId = $_SESSION['user_id'];
 
 try {
-    // Get sections created by this user
-    $stmt = $conn->prepare("SELECT id, section_name FROM sections WHERE created_by = ? ORDER BY section_name");
+    // Get sections assigned to this teacher
+    $stmt = $conn->prepare("
+        SELECT s.id, s.section_name
+        FROM sections s
+        JOIN teacher_sections ts ON ts.section_id = s.id
+        WHERE ts.teacher_id = ?
+        ORDER BY s.section_name
+    ");
     $stmt->bind_param("i", $userId);
     $stmt->execute();
     $result = $stmt->get_result();

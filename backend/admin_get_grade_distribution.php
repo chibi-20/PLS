@@ -5,10 +5,9 @@ require_once 'db.php';
 
 try {
     $query = "
-        SELECT g.student_grade 
-        FROM grades g 
-        JOIN sections s ON g.section_id = s.id 
-        JOIN users u ON s.created_by = u.id 
+        SELECT g.student_grade
+        FROM grades g
+        JOIN users u ON g.created_by = u.id
         WHERE u.role = 'teacher'
     ";
     $result = $conn->query($query);

@@ -17,12 +17,30 @@ CREATE TABLE users (
 );
 
 -- Create sections table
+-- Sections are canonical and admin-managed, scoped to a grade level and school year.
+-- created_by records which admin created the section (not an ownership link -
+-- see teacher_sections for the many-to-many link between teachers and sections).
 CREATE TABLE sections (
     id INT PRIMARY KEY AUTO_INCREMENT,
     section_name VARCHAR(100) NOT NULL,
-    created_by INT NOT NULL,
+    grade_level ENUM('Grade 7', 'Grade 8', 'Grade 9', 'Grade 10') NOT NULL,
+    created_by INT NULL,
+    school_year VARCHAR(20) DEFAULT '2025-2026',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY uniq_section_grade_year (section_name, grade_level, school_year)
+);
+
+-- Links teachers to the sections they teach (many teachers per section, many
+-- sections per teacher)
+CREATE TABLE teacher_sections (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    teacher_id INT NOT NULL,
+    section_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE,
+    UNIQUE KEY uniq_teacher_section (teacher_id, section_id)
 );
 
 -- Create grades table
@@ -34,9 +52,33 @@ CREATE TABLE grades (
     student_grade DECIMAL(5,2) NOT NULL CHECK (student_grade BETWEEN 0 AND 100),
     gender ENUM('Male', 'Female') NOT NULL,
     created_by INT NOT NULL,
+    school_year VARCHAR(20) DEFAULT '2025-2026',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Official DepEd LIS student count per section, per school year (admin-entered)
+CREATE TABLE lis_student_counts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    school_year VARCHAR(20) NOT NULL,
+    section_id INT NOT NULL,
+    official_count INT NOT NULL CHECK (official_count >= 0),
+    updated_by INT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY uniq_year_section (school_year, section_id)
+);
+
+-- Manually-entered whole-school student total, per school year (admin-entered)
+CREATE TABLE school_student_totals (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    school_year VARCHAR(20) NOT NULL UNIQUE,
+    total_students INT NOT NULL CHECK (total_students >= 0),
+    updated_by INT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Insert default admin user (password: ilovejacobo)

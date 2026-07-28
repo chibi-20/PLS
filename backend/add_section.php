@@ -1,4 +1,7 @@
 <?php
+// Links the logged-in teacher to one of the canonical sections for their grade
+// level (used by the "Manage Sections" checkbox list). Sections themselves are
+// created by the admin, not teachers.
 session_start();
 header('Content-Type: application/json');
 require_once 'db.php';
@@ -10,50 +13,61 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId = $_SESSION['user_id'];
+$sectionId = intval($_POST['section_id'] ?? 0);
 
-// Get form data
-$sectionName = trim($_POST['section_name'] ?? '');
-
-if (empty($sectionName)) {
-    echo json_encode(["success" => false, "message" => "Section name is required"]);
+if ($sectionId <= 0) {
+    echo json_encode(["success" => false, "message" => "Section is required"]);
     exit;
 }
 
 try {
-    // Check if section already exists for this user
-    $stmt = $conn->prepare("SELECT id FROM sections WHERE section_name = ? AND created_by = ?");
-    $stmt->bind_param("si", $sectionName, $userId);
+    // Verify the section belongs to the teacher's own grade level
+    $stmt = $conn->prepare("
+        SELECT s.id, s.section_name
+        FROM sections s
+        JOIN users u ON u.grade_level = s.grade_level
+        WHERE s.id = ? AND u.id = ?
+    ");
+    $stmt->bind_param("ii", $sectionId, $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 0) {
+        echo json_encode(["success" => false, "message" => "Section not found for your grade level"]);
+        $stmt->close();
+        exit;
+    }
+    $section = $result->fetch_assoc();
+    $stmt->close();
+
+    // Check if already assigned
+    $stmt = $conn->prepare("SELECT id FROM teacher_sections WHERE teacher_id = ? AND section_id = ?");
+    $stmt->bind_param("ii", $userId, $sectionId);
     $stmt->execute();
     $stmt->store_result();
-    
+
     if ($stmt->num_rows > 0) {
-        echo json_encode(["success" => false, "message" => "Section already exists"]);
+        echo json_encode(["success" => false, "message" => "Section already assigned"]);
         $stmt->close();
         exit;
     }
     $stmt->close();
-    
-    // Insert new section with current school year
-    $currentSchoolYear = "2025-2026"; // You can make this dynamic later
-    $stmt = $conn->prepare("INSERT INTO sections (section_name, created_by, school_year) VALUES (?, ?, ?)");
-    $stmt->bind_param("sis", $sectionName, $userId, $currentSchoolYear);
+
+    $stmt = $conn->prepare("INSERT INTO teacher_sections (teacher_id, section_id) VALUES (?, ?)");
+    $stmt->bind_param("ii", $userId, $sectionId);
     $stmt->execute();
-    $sectionId = $stmt->insert_id;
     $stmt->close();
-    
+
     echo json_encode([
         "success" => true,
         "message" => "Section added successfully",
         "section" => [
             "id" => $sectionId,
-            "section_name" => $sectionName
+            "section_name" => $section['section_name']
         ]
     ]);
-    
+
 } catch (Exception $e) {
-    echo json_encode([
-        "success" => false,
-        "message" => "Error adding section: " . $e->getMessage()
-    ]);
+    echo json_encode(["success" => false, "message" => "Error adding section: " . $e->getMessage()]);
 }
 ?>

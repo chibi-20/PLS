@@ -29,8 +29,13 @@ if (empty($boysGrades) && empty($girlsGrades)) {
 }
 
 try {
-    // Verify that this section belongs to the current user
-    $stmt = $conn->prepare("SELECT id FROM sections WHERE section_name = ? AND created_by = ?");
+    // Verify that this section is assigned to the current user
+    $stmt = $conn->prepare("
+        SELECT s.id
+        FROM sections s
+        JOIN teacher_sections ts ON ts.section_id = s.id
+        WHERE s.section_name = ? AND ts.teacher_id = ?
+    ");
     $stmt->bind_param("si", $sectionName, $userId);
     $stmt->execute();
     $result = $stmt->get_result();

@@ -58,19 +58,19 @@ try {
     
     // Build the base query for analytics - exclude admin users
     $query = "
-        SELECT 
+        SELECT
             u.id as user_id,
             u.fullname,
             u.subject_taught,
             u.grade_level,
-            COUNT(DISTINCT s.id) as section_count,
+            COUNT(DISTINCT ts.section_id) as section_count,
             COUNT(DISTINCT g.id) as grade_count,
             COALESCE(AVG(g.student_grade), 0) as avg_grade,
             SUM(g.student_grade) as total_grades,
             MAX(g.created_at) as recent_activity
         FROM users u
-        LEFT JOIN sections s ON u.id = s.created_by
-        LEFT JOIN grades g ON s.id = g.section_id
+        LEFT JOIN teacher_sections ts ON ts.teacher_id = u.id
+        LEFT JOIN grades g ON g.created_by = u.id
         WHERE u.role = 'teacher'
     ";
     

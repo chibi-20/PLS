@@ -1,4 +1,7 @@
 <?php
+// Compares each section's persisted official LIS student count against the
+// actual number of students with proficiency data entered for a given
+// subject/term/school year, section by section.
 session_start();
 header('Content-Type: application/json');
 require_once 'db.php';
@@ -24,69 +27,64 @@ try {
         ]);
         exit;
     }
-    
-    // Query to get student count and section breakdown for the specified criteria
+
+    // Per section: the persisted official LIS count (if any) vs. the deduped
+    // count of students with proficiency data entered for this subject/term/year.
     $query = "
-        SELECT 
+        SELECT
+            s.id AS section_id,
             s.section_name,
-            COUNT(g.id) as student_count
-        FROM users u
-        JOIN sections s ON u.id = s.created_by
-        JOIN grades g ON s.id = g.section_id
-        WHERE u.role = 'teacher'
-        AND u.subject_taught = ?
-        AND u.grade_level = ?
-        AND g.term = ?
-        AND g.school_year = ?
-        GROUP BY s.id, s.section_name
+            l.official_count,
+            COUNT(DISTINCT CONCAT(g.student_grade, '_', g.gender)) AS system_count
+        FROM sections s
+        LEFT JOIN lis_student_counts l ON l.section_id = s.id AND l.school_year = ?
+        LEFT JOIN grades g ON g.section_id = s.id
+            AND g.term = ?
+            AND g.school_year = ?
+            AND g.created_by IN (SELECT id FROM users WHERE role = 'teacher' AND subject_taught = ?)
+        WHERE s.grade_level = ? AND s.school_year = ?
+        GROUP BY s.id, s.section_name, l.official_count
         ORDER BY s.section_name
     ";
 
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("ssis", $subject, $gradeLevel, $term, $schoolYear);
+    $stmt->bind_param("sissss", $schoolYear, $term, $schoolYear, $subject, $gradeLevel, $schoolYear);
     $stmt->execute();
     $result = $stmt->get_result();
-    
-    $totalStudents = 0;
-    $sectionBreakdown = [];
-    
+
+    $sections = [];
+    $totalLis = 0;
+    $totalSystem = 0;
+    $hasAnyLisCount = false;
+
     while ($row = $result->fetch_assoc()) {
-        $students = intval($row['student_count']);
-        $totalStudents += $students;
-        $sectionBreakdown[] = [
+        $lisCount = $row['official_count'] !== null ? intval($row['official_count']) : null;
+        $systemCount = intval($row['system_count']);
+
+        if ($lisCount !== null) {
+            $hasAnyLisCount = true;
+            $totalLis += $lisCount;
+        }
+        $totalSystem += $systemCount;
+
+        $sections[] = [
+            'section_id' => intval($row['section_id']),
             'section_name' => $row['section_name'],
-            'student_count' => $students
+            'lis_count' => $lisCount,
+            'system_count' => $systemCount,
+            'difference' => $lisCount !== null ? ($systemCount - $lisCount) : null
         ];
     }
-    
     $stmt->close();
-    
-    // Additional query to get unique students (to avoid counting duplicates if a student has multiple grades)
-    $uniqueQuery = "
-        SELECT COUNT(DISTINCT CONCAT(g.section_id, '_', g.student_grade, '_', g.gender)) as unique_count
-        FROM users u
-        JOIN sections s ON u.id = s.created_by
-        JOIN grades g ON s.id = g.section_id
-        WHERE u.role = 'teacher'
-        AND u.subject_taught = ?
-        AND u.grade_level = ?
-        AND g.term = ?
-        AND g.school_year = ?
-    ";
 
-    $uniqueStmt = $conn->prepare($uniqueQuery);
-    $uniqueStmt->bind_param("ssis", $subject, $gradeLevel, $term, $schoolYear);
-    $uniqueStmt->execute();
-    $uniqueResult = $uniqueStmt->get_result();
-    $uniqueRow = $uniqueResult->fetch_assoc();
-    $uniqueStudents = intval($uniqueRow['unique_count']);
-    $uniqueStmt->close();
-    
     echo json_encode([
         "success" => true,
-        "student_count" => $uniqueStudents, // Use unique count to avoid duplicates
-        "total_records" => $totalStudents, // Total grade records
-        "section_breakdown" => $sectionBreakdown,
+        "sections" => $sections,
+        "totals" => [
+            "lis_count" => $hasAnyLisCount ? $totalLis : null,
+            "system_count" => $totalSystem,
+            "difference" => $hasAnyLisCount ? ($totalSystem - $totalLis) : null
+        ],
         "query_info" => [
             "school_year" => $schoolYear,
             "subject" => $subject,
@@ -94,7 +92,7 @@ try {
             "term" => $term
         ]
     ]);
-    
+
 } catch (Exception $e) {
     echo json_encode([
         "success" => false,
