@@ -1580,6 +1580,9 @@
                   <option value="2029-2030">2029-2030</option>
                 </select>
               </div>
+              <div class="form-group" style="display:flex; align-items:flex-end;">
+                <button type="button" class="btn-secondary" onclick="showCopySectionsModal()">📋 Copy from Year</button>
+              </div>
             </div>
 
             <div class="comparison-card lis-count" style="max-width: 340px;">
@@ -1609,8 +1612,9 @@
                 <input type="text" id="newSectionName" placeholder="e.g., Section A">
               </div>
 
-              <div class="form-group" style="display: flex; align-items: end;">
+              <div class="form-group" style="display: flex; align-items: end; gap: 10px;">
                 <button type="button" class="btn-primary" onclick="addAdminSection()">➕ Add Section</button>
+                <button type="button" class="btn-secondary" onclick="showImportSectionsModal()">📂 Import CSV</button>
               </div>
             </div>
           </div>
@@ -1778,6 +1782,117 @@
       <div class="modal-actions">
         <button type="button" class="btn-secondary" onclick="closeDeleteTeacherModal()">Cancel</button>
         <button type="button" class="btn-danger" onclick="confirmDeleteTeacher()">🗑️ Delete Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Sections CSV Modal -->
+  <div id="importSectionsModal" class="modal">
+    <div class="modal-content" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3>📂 Import Sections from CSV</h3>
+        <span class="close-btn" onclick="hideImportSectionsModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p style="color: #6b7280; margin-bottom: 16px;">
+          Upload a CSV file with two columns: <strong>section</strong> and <strong>number_of_students</strong>.
+          Sections will be created if they don't exist, and LIS counts will be set automatically.
+        </p>
+
+        <div style="display: flex; gap: 20px; margin-bottom: 16px;">
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label for="importGradeLevel">Grade Level:</label>
+            <select id="importGradeLevel">
+              <option value="Grade 7">Grade 7</option>
+              <option value="Grade 8">Grade 8</option>
+              <option value="Grade 9">Grade 9</option>
+              <option value="Grade 10">Grade 10</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label for="importSchoolYear">School Year:</label>
+            <select id="importSchoolYear">
+              <option value="2025-2026">2025-2026</option>
+              <option value="2026-2027">2026-2027</option>
+              <option value="2027-2028">2027-2028</option>
+              <option value="2028-2029">2028-2029</option>
+              <option value="2029-2030">2029-2030</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="importCsvFile">CSV File:</label>
+          <input type="file" id="importCsvFile" accept=".csv" onchange="parseImportCSV()"
+                 style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; background: #f9fafb;">
+        </div>
+
+        <div id="importPreviewContainer" style="display: none; margin-top: 10px;">
+          <h4 style="margin-bottom: 8px; color: #374151;">Preview — <span id="importRowCount">0</span> row(s)</h4>
+          <div style="max-height: 240px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+            <table class="teacher-table" style="margin: 0;">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Section Name</th>
+                  <th>LIS Student Count</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="importPreviewBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="importErrorMsg" style="display: none; color: #dc2626; padding: 10px 14px;
+             background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; margin-top: 12px;"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="hideImportSectionsModal()">Cancel</button>
+        <button type="button" class="btn-primary" id="importSaveBtn" onclick="executeImportSections()" disabled>💾 Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Copy Sections to New Year Modal -->
+  <div id="copySectionsModal" class="modal">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3>📋 Copy Sections to New Year</h3>
+        <span class="close-btn" onclick="hideCopySectionsModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p style="color: #6b7280; margin-bottom: 20px;">
+          Copies all section names from one school year to another. LIS student counts are <strong>not</strong> copied — only the section list.
+        </p>
+
+        <div class="form-group">
+          <label for="copyFromYear">Copy FROM:</label>
+          <select id="copyFromYear" onchange="updateCopyPreview()">
+            <option value="2025-2026">2025-2026</option>
+            <option value="2026-2027">2026-2027</option>
+            <option value="2027-2028">2027-2028</option>
+            <option value="2028-2029">2028-2029</option>
+            <option value="2029-2030">2029-2030</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="copyToYear">Copy TO:</label>
+          <select id="copyToYear" onchange="updateCopyPreview()">
+            <option value="2025-2026">2025-2026</option>
+            <option value="2026-2027">2026-2027</option>
+            <option value="2027-2028">2027-2028</option>
+            <option value="2028-2029">2028-2029</option>
+            <option value="2029-2030">2029-2030</option>
+          </select>
+        </div>
+
+        <div id="copyPreviewMsg" style="display:none; padding: 12px 16px; border-radius: 8px; margin-top: 4px; font-size: 0.92em;"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="hideCopySectionsModal()">Cancel</button>
+        <button type="button" class="btn-primary" id="copySaveBtn" onclick="executeCopySections()">📋 Copy Sections</button>
       </div>
     </div>
   </div>
@@ -2255,6 +2370,231 @@
       } catch (error) {
         console.error('Error deleting section:', error);
         alert('Error deleting section. Please try again.');
+      }
+    }
+
+    // Import Sections CSV
+    let importParsedData = [];
+
+    function showImportSectionsModal() {
+      document.getElementById('importGradeLevel').value = document.getElementById('sectionsGradeLevel').value;
+      document.getElementById('importSchoolYear').value = currentSectionsSchoolYear();
+      document.getElementById('importCsvFile').value = '';
+      document.getElementById('importPreviewContainer').style.display = 'none';
+      document.getElementById('importErrorMsg').style.display = 'none';
+      document.getElementById('importSaveBtn').disabled = true;
+      document.getElementById('importSaveBtn').textContent = '💾 Import';
+      importParsedData = [];
+      document.getElementById('importSectionsModal').style.display = 'flex';
+    }
+
+    function hideImportSectionsModal() {
+      document.getElementById('importSectionsModal').style.display = 'none';
+    }
+
+    function parseImportCSV() {
+      const file = document.getElementById('importCsvFile').files[0];
+      const errorDiv = document.getElementById('importErrorMsg');
+      const previewContainer = document.getElementById('importPreviewContainer');
+      const saveBtn = document.getElementById('importSaveBtn');
+
+      errorDiv.style.display = 'none';
+      previewContainer.style.display = 'none';
+      saveBtn.disabled = true;
+      importParsedData = [];
+
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const lines = e.target.result.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length === 0) { showImportError('The CSV file is empty.'); return; }
+
+        let startIdx = 0;
+        const firstParts = lines[0].split(',');
+        if (firstParts.length >= 2 && isNaN(firstParts[1].trim())) startIdx = 1;
+
+        const rows = [];
+        for (let i = startIdx; i < lines.length; i++) {
+          const parts = lines[i].split(',');
+          const sectionName = (parts[0] || '').trim();
+          if (!sectionName) continue;
+
+          const countRaw = (parts[1] || '').trim();
+          const count = countRaw === '' ? null : parseInt(countRaw, 10);
+          const invalid = count !== null && (isNaN(count) || count < 0);
+          rows.push({ sectionName, count, valid: !invalid, error: invalid ? 'Invalid count' : '' });
+        }
+
+        if (rows.length === 0) { showImportError('No valid rows found in the CSV.'); return; }
+
+        importParsedData = rows;
+        renderImportPreview(rows);
+        if (!rows.some(r => !r.valid)) saveBtn.disabled = false;
+      };
+      reader.readAsText(file);
+    }
+
+    function showImportError(msg) {
+      const errorDiv = document.getElementById('importErrorMsg');
+      errorDiv.textContent = msg;
+      errorDiv.style.display = 'block';
+    }
+
+    function importEscapeHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function renderImportPreview(rows) {
+      document.getElementById('importRowCount').textContent = rows.length;
+      document.getElementById('importPreviewBody').innerHTML = rows.map((row, i) => {
+        const ok = row.valid;
+        return `<tr>
+          <td>${i + 1}</td>
+          <td>${importEscapeHtml(row.sectionName)}</td>
+          <td>${row.count !== null ? row.count : '—'}</td>
+          <td style="color:${ok ? '#16a34a' : '#dc2626'};">${ok ? '✅ OK' : '⚠️ ' + row.error}</td>
+        </tr>`;
+      }).join('');
+      document.getElementById('importPreviewContainer').style.display = 'block';
+    }
+
+    async function executeImportSections() {
+      if (importParsedData.length === 0) return;
+
+      const gradeLevel = document.getElementById('importGradeLevel').value;
+      const schoolYear = document.getElementById('importSchoolYear').value;
+      const saveBtn = document.getElementById('importSaveBtn');
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = '⏳ Importing…';
+
+      try {
+        const response = await fetch('backend/admin_import_sections.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            grade_level: gradeLevel,
+            school_year: schoolYear,
+            sections: importParsedData.map(r => ({ section_name: r.sectionName, official_count: r.count }))
+          })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          hideImportSectionsModal();
+          loadAdminSections();
+          loadSchoolTotal();
+          alert(`Import complete! ${data.created} section(s) created, ${data.updated} LIS count(s) set.`);
+        } else {
+          showImportError('Import failed: ' + data.message);
+          saveBtn.disabled = false;
+          saveBtn.textContent = '💾 Import';
+        }
+      } catch (error) {
+        console.error('Import error:', error);
+        showImportError('Import failed. Please try again.');
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Import';
+      }
+    }
+
+    // Copy Sections to New Year
+    function showCopySectionsModal() {
+      const currentYear = currentSectionsSchoolYear();
+      const years = ['2025-2026','2026-2027','2027-2028','2028-2029','2029-2030'];
+      const nextIdx = Math.min(years.indexOf(currentYear) + 1, years.length - 1);
+
+      document.getElementById('copyFromYear').value = currentYear;
+      document.getElementById('copyToYear').value = years[nextIdx];
+      document.getElementById('copyPreviewMsg').style.display = 'none';
+      document.getElementById('copySaveBtn').textContent = '📋 Copy Sections';
+      document.getElementById('copySectionsModal').style.display = 'flex';
+      updateCopyPreview();
+    }
+
+    function hideCopySectionsModal() {
+      document.getElementById('copySectionsModal').style.display = 'none';
+    }
+
+    async function updateCopyPreview() {
+      const fromYear = document.getElementById('copyFromYear').value;
+      const toYear   = document.getElementById('copyToYear').value;
+      const msg      = document.getElementById('copyPreviewMsg');
+
+      if (fromYear === toYear) {
+        msg.style.display = 'block';
+        msg.style.background = '#fef2f2';
+        msg.style.color = '#dc2626';
+        msg.textContent = 'Source and destination year must be different.';
+        document.getElementById('copySaveBtn').disabled = true;
+        return;
+      }
+
+      msg.style.display = 'block';
+      msg.style.background = '#f0f9ff';
+      msg.style.color = '#0369a1';
+      msg.textContent = 'Checking…';
+
+      try {
+        const res  = await fetch(`backend/admin_copy_sections.php?preview=1&from_year=${encodeURIComponent(fromYear)}&to_year=${encodeURIComponent(toYear)}`);
+        const data = await res.json();
+
+        if (!data.success) {
+          msg.style.background = '#fef2f2';
+          msg.style.color = '#dc2626';
+          msg.textContent = data.message;
+          document.getElementById('copySaveBtn').disabled = true;
+        } else {
+          msg.style.background = '#f0fdf4';
+          msg.style.color = '#15803d';
+          msg.textContent = `${data.total} section(s) in ${fromYear} → ${data.new} will be added to ${toYear}, ${data.existing} already exist.`;
+          document.getElementById('copySaveBtn').disabled = data.new === 0;
+        }
+      } catch (e) {
+        msg.style.background = '#fef2f2';
+        msg.style.color = '#dc2626';
+        msg.textContent = 'Could not load preview.';
+        document.getElementById('copySaveBtn').disabled = true;
+      }
+    }
+
+    async function executeCopySections() {
+      const fromYear = document.getElementById('copyFromYear').value;
+      const toYear   = document.getElementById('copyToYear').value;
+      const btn      = document.getElementById('copySaveBtn');
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Copying…';
+
+      try {
+        const res  = await fetch('backend/admin_copy_sections.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ from_year: fromYear, to_year: toYear })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          hideCopySectionsModal();
+          if (currentSectionsSchoolYear() === toYear) {
+            loadAdminSections();
+            loadSchoolTotal();
+          }
+          alert(`Done! ${data.copied} section(s) copied to ${toYear}, ${data.skipped} already existed.`);
+        } else {
+          const msg = document.getElementById('copyPreviewMsg');
+          msg.style.display = 'block';
+          msg.style.background = '#fef2f2';
+          msg.style.color = '#dc2626';
+          msg.textContent = data.message;
+          btn.disabled = false;
+          btn.textContent = '📋 Copy Sections';
+        }
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        btn.textContent = '📋 Copy Sections';
       }
     }
 

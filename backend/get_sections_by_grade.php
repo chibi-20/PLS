@@ -8,9 +8,9 @@ session_start();
 header('Content-Type: application/json');
 require_once 'db.php';
 
-$gradeLevel = trim($_GET['grade_level'] ?? '');
-$schoolYear = trim($_GET['school_year'] ?? '') ?: '2025-2026';
-$teacherId = null;
+$gradeLevel      = trim($_GET['grade_level'] ?? '');
+$schoolYearParam = trim($_GET['school_year'] ?? '');
+$teacherId       = null;
 
 if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'teacher') {
     $teacherId = intval($_SESSION['user_id']);
@@ -30,7 +30,36 @@ if (empty($gradeLevel)) {
 }
 
 try {
-    if ($teacherId) {
+    if ($schoolYearParam !== '') {
+        // Explicit school year requested (admin dashboard, LIS comparison, etc.)
+        $schoolYear = $schoolYearParam;
+        if ($teacherId) {
+            $stmt = $conn->prepare("
+                SELECT s.id, s.section_name,
+                       (ts.id IS NOT NULL) AS assigned
+                FROM sections s
+                LEFT JOIN teacher_sections ts ON ts.section_id = s.id AND ts.teacher_id = ?
+                WHERE s.grade_level = ? AND s.school_year = ?
+                ORDER BY s.section_name
+            ");
+            $stmt->bind_param("iss", $teacherId, $gradeLevel, $schoolYear);
+        } else {
+            $stmt = $conn->prepare("
+                SELECT s.id, s.section_name, 0 AS assigned
+                FROM sections s
+                WHERE s.grade_level = ? AND s.school_year = ?
+                ORDER BY s.section_name
+            ");
+            $stmt->bind_param("ss", $gradeLevel, $schoolYear);
+        }
+    } elseif ($teacherId) {
+        // Teacher dashboard: use most recent school year so new sections appear
+        $sy_stmt = $conn->prepare("SELECT school_year FROM sections WHERE grade_level = ? ORDER BY school_year DESC LIMIT 1");
+        $sy_stmt->bind_param("s", $gradeLevel);
+        $sy_stmt->execute();
+        $sy_row = $sy_stmt->get_result()->fetch_assoc();
+        $sy_stmt->close();
+        $schoolYear = $sy_row['school_year'] ?? '2025-2026';
         $stmt = $conn->prepare("
             SELECT s.id, s.section_name,
                    (ts.id IS NOT NULL) AS assigned
@@ -41,13 +70,16 @@ try {
         ");
         $stmt->bind_param("iss", $teacherId, $gradeLevel, $schoolYear);
     } else {
+        // Public registration: show all sections for this grade regardless of school year,
+        // deduplicated by name (take the highest id so new imports always surface).
         $stmt = $conn->prepare("
-            SELECT s.id, s.section_name, 0 AS assigned
+            SELECT MAX(s.id) AS id, s.section_name, 0 AS assigned
             FROM sections s
-            WHERE s.grade_level = ? AND s.school_year = ?
+            WHERE s.grade_level = ?
+            GROUP BY s.section_name
             ORDER BY s.section_name
         ");
-        $stmt->bind_param("ss", $gradeLevel, $schoolYear);
+        $stmt->bind_param("s", $gradeLevel);
     }
 
     $stmt->execute();
